@@ -6,7 +6,8 @@ from transformers import (
 import spacy
 import torch
 import numpy as np
-from bert_inference import get_preds as get_bert_preds
+
+from pretrainedNER.bert_inference import get_preds as get_bert_preds
 
 f_prefix = '/mnt/' if __name__=='__main__' else '' # want to /mnt/ if running from here but not if hosting model api
 device = 'cuda' if torch.cuda.is_available() else 'cpu'

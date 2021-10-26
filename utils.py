@@ -1,3 +1,8 @@
 CONLL_TO_RETAIN = {"PER", "MISC", "ORG", "LOC"}
+<<<<<<< HEAD
 CONLL_MAPPINGS = {"PERSON":"PER", "COMPANY":"ORG", "GPE":"LOC", 'EVENT':"MISC", 'FAC':"MISC", 'LANGUAGE':"MISC",
                   'LAW':"MISC", 'NORP':"MISC", 'PRODUCT':"MISC",'WORK_OF_ART':"MISC"}
+=======
+CONLL_MAPPINGS = {"PERSON":"PER", "COMPANY":"ORG", "GPE":"LOC", 'EVENT':"MISC", 'FAC':"MISC", 'LANGUAGE':"MISC", 
+                  'LAW':"MISC", 'NORP':"MISC", 'PRODUCT':"MISC",'WORK_OF_ART':"MISC"}
+>>>>>>> 3eb81ec37ad56ce0813ea5af2e567106abc3b3a1

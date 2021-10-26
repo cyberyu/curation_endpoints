@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3eb81ec37ad56ce0813ea5af2e567106abc3b3a1
 import utils
 
 
@@ -7,7 +11,11 @@ def get_spacy_preds(texts, model):
     """
     if not type(texts) is list:
         texts = [texts]
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 3eb81ec37ad56ce0813ea5af2e567106abc3b3a1
     preds_list = []
     for doc in model.pipe(texts):
         preds = doc.ents
@@ -19,6 +27,7 @@ def get_spacy_preds(texts, model):
         for pred in preds:
             start_ind, end_ind = pred[0].idx, pred[-1].idx + len(pred[-1])
             span = doc.char_span(start_ind, end_ind, label=pred.label_)
+<<<<<<< HEAD
 
             # map predicted label to Conll for demo
             lab = utils.CONLL_MAPPINGS.get(pred.label_, None)
@@ -34,3 +43,20 @@ def get_spacy_preds(texts, model):
         preds_list.append(spans)
 
     return preds_list
+=======
+            
+            # map predicted label to Conll for demo
+            lab = utils.CONLL_MAPPINGS.get(pred.label_, None)
+            
+            if span is not None and lab is not None:
+                spans.append({'name': lab,
+                              'pos': [start_ind, end_ind - 1], 
+                              'tpos': [span.start,span.end - 1],
+                              'text': span.text,
+                              'confidence': 1
+                             })
+                                
+        preds_list.append(spans)
+    
+    return preds_list
+>>>>>>> 3eb81ec37ad56ce0813ea5af2e567106abc3b3a1

@@ -27,11 +27,12 @@ def setup_model(model_extension, running_locally=False):
  
     data_path = 'WSModels/'
     if running_locally:
-        data_path = '/mnt/' + data_path 
+        data_path = '' + data_path
 
     model_dir = data_path + model_extension
     with open(os.path.join(model_dir, 'flags.pkl'), 'rb') as f:
         flags = pickle.load(f)
+        print(flags)
 
     # need to override flags.data_path 
     flags.data_path = data_path

@@ -40,6 +40,8 @@ class BaseModel(nn.Module):
             self.get_pretrained_bert()
 
         embed_dim = 768 if 'large' not in flags.model_to_use else 1024
+
+
         if (self.flags.pred_spans_model_ext is not None):
             # means using candidate span generator
             input_sz = embed_dim

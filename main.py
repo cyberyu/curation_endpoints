@@ -1,3 +1,4 @@
+from typing import Dict, List, Any
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
 #from pretrainedNER.snips_endpoint import get_preds
@@ -5,7 +6,10 @@ import snips_nlu_parsers
 from flair.data import Sentence
 from flair.models import SequenceTagger
 import spacy
+import numpy as np
 import utils
+from utils import extract_preds, to_docs
+from skweak import aggregation, utils
 import transformers
 from transformers import (
     AutoConfig,
@@ -13,13 +17,84 @@ from transformers import (
     AutoTokenizer)
 import spacy
 import torch
-import numpy as np
 from pretrainedNER.bert_inference import get_preds as get_bert_preds
 from pretrainedNER.spacy_get_preds import get_spacy_preds
+from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
+
 
 app = Flask(__name__)
 api = Api(app)
 
+# class WeakSupervision_HMM(Resource):
+#     def __init__(self):
+#         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
+#         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
+#
+#
+#     def get(texts: List[str], list_weak_labels: List[Dict[str, List[Any]]]):
+#         docs, unique_labs = to_docs(texts, list_weak_labels, ignore_annotators=IGNORE_ANNOTATORS)
+#         f_ext = '/mnt/' if __name__ == '__main__' else ''
+#         with open(f_ext + 'WSModels/hmm_conll.pkl', 'rb') as f:
+#             hmm = pickle.load(f)
+#
+#         print('UNQIUE labels: ', unique_labs)
+#         docs = list(hmm.pipe(docs))
+#
+#         # now turn back into dicts to return with list preds per doc
+#         preds_list = extract_preds(docs, 'hmm')
+#         return preds_list
+#
+class WeakSupervision_MajorityVote(Resource):
+    def __init__(self):
+        IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
+        LABELS = ['MISC', 'PER', 'LOC', 'ORG']
+
+    def get(texts: List[str], list_weak_labels: List[Dict[str,List[Any]]]):
+        IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
+        LABELS = ['MISC', 'PER', 'LOC', 'ORG']
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        args = parser.parse_args()
+
+
+        if type(args['texts']) is not list:
+            texts = args['texts'].split(",")
+
+
+        # try with majority vote now
+        docs, unique_labs = to_docs(texts, list_weak_labels, ignore_annotators=IGNORE_ANNOTATORS, labels=LABELS)
+
+        maj_voter = aggregation.MajorityVoterRev("majority_voter", list(unique_labs - set(['ENT'])))
+        docs = list(maj_voter.pipe(docs)) #.fit_and_aggregate(docs)
+        preds_list = extract_preds(docs, 'majority_voter')
+        return preds_list
+
+class WeakSupervision_fuzzycrf(Resource):
+    def __init__(self):
+        self.model, self.nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
+
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('text', type=str, required=True)
+        parser.add_argument('weak_labels', type=dict, required=True)
+        args = parser.parse_args()
+        text = args['text']
+        weak_labels = args['weak_labels']
+        return get_model_preds(text, weak_labels, self.model, self.nlp)
+
+
+class WeakSupervision_dws(Resource):
+    def __init__(self):
+        self.model, self.nlp = setup_model('dws', running_locally=True)
+
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('text', type=str, required=True)
+        parser.add_argument('weak_labels', type=dict, required=True)
+        args = parser.parse_args()
+        text = args['text']
+        weak_labels = args['weak_labels']
+        return get_model_preds(text, weak_labels, self.model, self.nlp)
 
 class PretrainNER_en_core_web_md(Resource):
     def __init__(self):
@@ -227,13 +302,16 @@ class PretrainNER_SNIPS(Resource):
 
         return preds_list
 
-
 api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
 api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
 api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
 api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
+
+api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
+api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')
+
 
 
 if __name__ == '__main__':

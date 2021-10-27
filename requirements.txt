@@ -39,3 +39,6 @@ pip install skweak
 text= 'Joe went to Chicago.'
 weak_labels = {'labeler1': [{'name': 'PER', 'pos': [0,2], 'tpos': [0,0], 'text': 'Joe', 'confidence': 1}], 'labeler2': [{'name': 'ORG', 'pos': [0,2], 'tpos': [0,0], 'text': 'Joe', 'confidence': 1}], 'labeler3': [{'name': 'PER', 'pos': [0,2], 'tpos': [0,0], 'text': 'Joe', 'confidence': 1}]}
 
+curl -H 'Content-Type: application/json' -X --request GET 'http://127.0.0.1:5000/pretrainNER/flair?texts=["I went to Victoria over the holidays.", "How is weather in Chicago?"]'
+
+curl -X GET -d "texts=["I went to Victoria over the holidays.", "How is weather in Chicago?"]" "http://127.0.0.1:5000/pretrainNER/flair"

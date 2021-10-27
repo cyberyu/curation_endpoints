@@ -1,15 +1,10 @@
-from typing import Dict, List, Any
+
+import snips_nlu_parsers
 from flask import Flask
 from flask_restful import Resource, Api, reqparse
-#from pretrainedNER.snips_endpoint import get_preds
-import snips_nlu_parsers
 from flair.data import Sentence
 from flair.models import SequenceTagger
-import spacy
-import numpy as np
 import utils
-#from skweak import aggregation, utils
-import transformers
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
@@ -18,7 +13,6 @@ import spacy
 import torch
 from pretrainedNER.bert_inference import get_preds as get_bert_preds
 from pretrainedNER.spacy_get_preds import get_spacy_preds
-# from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
 
 
 app = Flask(__name__)
@@ -181,12 +175,12 @@ class PretrainNER_FLAIR(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('texts', type=str, required=True)
         args = parser.parse_args()
-        print(args['texts'])
+
 
         if type(args['texts']) is not list:
             texts = args['texts'].split(",")
             #texts = [texts]
-        print(texts)
+
         preds_list = []
         for text in texts:
             doc = self.spacy_model(text)
@@ -230,13 +224,7 @@ class PretrainNER_FLAIR(Resource):
 class PretrainNER_SNIPS(Resource):
 
     def __init__(self):
-
         self.parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
-
-
-    # def get(self):
-    #     return {'hello': 'world'}
-
 
     def get(self):
         """ for now texts is list of strings
@@ -252,6 +240,7 @@ class PretrainNER_SNIPS(Resource):
             texts = args['texts'].split(",")
             #texts = [texts]
 
+        print(texts)
         preds_list = []
         for text in texts:
             spans = []

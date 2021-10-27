@@ -1,18 +1,40 @@
+wget https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+# install conda
+# create a virtual env
+conda create -n flaskpy3 python=3.6.3
+# activate the virtual env
+conda activate flaskpy3
+
+
+# git clone
+git clone https://github.com/cyberyu/curation_endpoints
+
+#username:    cyberyu
+#token(password):  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
+
+# the following packages to be installed by pip
 snips_nlu_parsers
-fliar==0.9
+flair==0.9
 pytorch-crf
 seqeval
-cd trained_models/distilbert_hmm
+
+# create a folder under trained_models, and download the pretrained model files there, those files are in gitignore (too large)
+cd curation_endpoints/trained_models/distilbert_hmm
 wget https://huggingface.co/distilbert-base-uncased/resolve/main/pytorch_model.bin
 wget https://huggingface.co/distilbert-base-uncased/resolve/main/config.json
 
-cd trained_models/distilroberta_hmm
+cd curation_endpoints/trained_models/distilroberta_hmm
 wget https://huggingface.co/roberta-base/resolve/main/config.json
 wget https://huggingface.co/roberta-base/resolve/main/pytorch_model.bin
 
+pip install spacy
+# download spacy models
 python3 -m spacy download en_core_web_sm
 python3 -m spacy download en_core_web_trf
 python3 -m spacy download en_core_web_md
+
+pip install flask-restful
+pip install skweak
 
 text= 'Joe went to Chicago.'
 weak_labels = {'labeler1': [{'name': 'PER', 'pos': [0,2], 'tpos': [0,0], 'text': 'Joe', 'confidence': 1}], 'labeler2': [{'name': 'ORG', 'pos': [0,2], 'tpos': [0,0], 'text': 'Joe', 'confidence': 1}], 'labeler3': [{'name': 'PER', 'pos': [0,2], 'tpos': [0,0], 'text': 'Joe', 'confidence': 1}]}

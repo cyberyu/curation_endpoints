@@ -72,12 +72,12 @@ def get_model_preds(texts, list_weak_labels, model, nlp, span_preds):
         val_bert_embs, val_obs, val_text, val_spans_to_use = model.create_reusable_embeddings(train_docs=None, train_weak_labels=None, 
                                             train_span_preds=None, val_docs=[doc],
                                              val_weak_labels=[weak_labels], val_span_preds=[span_generator_preds])
-
+        
         if val_obs.shape[0] == 0:
             pred_labs = []
         else:
             pred_labs, _, _ = model.label(val_obs, val_bert_embs, text=val_text, spans_to_use=val_spans_to_use)
-            
+        
         if len(pred_labs) < len(doc):
             pred_labs.extend(['O']*(len(doc)-len(pred_labs)))
         
@@ -91,7 +91,7 @@ def get_model_preds(texts, list_weak_labels, model, nlp, span_preds):
                 print('ERROR in tokenization *****')
             
             pred_str = pred_labs[i]
-            pred_str = '-'.join(pred_str.split('-')[1:]) if '-' in pred_str else 'O' # want to ditch positional portion
+            pred_str = '-'.join(pred_str.split('-')[1:]) # want to ditch positional portion
             if pred_str != cur_label:
                 if cur_label != 'O':
                     # ended an entity span

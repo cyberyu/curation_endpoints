@@ -4,7 +4,7 @@ from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from flair.data import Sentence
 from flair.models import SequenceTagger
-from skweak_custom import aggregation
+from skweak import aggregation
 import utils
 from utils import extract_preds, to_docs
 from transformers import (
@@ -17,7 +17,6 @@ from pretrainedNER.bert_inference import get_preds as get_bert_preds
 from pretrainedNER.spacy_get_preds import get_spacy_preds
 import pickle
 from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
-import ast 
 
 app = Flask(__name__)
 api = Api(app)
@@ -42,30 +41,25 @@ api = Api(app)
 #         preds_list = extract_preds(docs, 'hmm')
 #         return preds_list
 
-def parse_texts_and_labels():
-    parser = reqparse.RequestParser()
-    parser.add_argument('texts', type=str, required=True)
-    parser.add_argument('weak_labels', type=str, required=True)
-    args = parser.parse_args()
-    text = ast.literal_eval(args['texts'])
-    weak_labels = ast.literal_eval(args['weak_labels'])
-    return text, weak_labels
-
 class WeakSupervision_MajorityVote(Resource):
     def __init__(self):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
 
-    def get(self):
+    def get(texts: List[str], list_weak_labels: List[Dict[str,List[Any]]]):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
-        text, weak_labels = parse_texts_and_labels()
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        args = parser.parse_args()
 
-        #if type(args['texts']) is not list:
-        #    texts = args['texts'].split(",")
+
+        if type(args['texts']) is not list:
+            texts = args['texts'].split(",")
+
 
         # try with majority vote now
-        docs, unique_labs = to_docs(text, weak_labels, ignore_annotators=IGNORE_ANNOTATORS, labels=LABELS)
+        docs, unique_labs = to_docs(texts, list_weak_labels, ignore_annotators=IGNORE_ANNOTATORS, labels=LABELS)
 
         maj_voter = aggregation.MajorityVoterRev("majority_voter", list(unique_labs - set(['ENT'])))
         docs = list(maj_voter.pipe(docs)) #.fit_and_aggregate(docs)
@@ -77,9 +71,13 @@ class WeakSupervision_fuzzycrf(Resource):
         self.model, self.nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
 
     def get(self):
-        text, weak_labels = parse_texts_and_labels()
-        span_preds = [[None]*len(weak_labels)]
-        return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        parser.add_argument('weak_labels', type=dict, required=True)
+        args = parser.parse_args()
+        text = args['texts']
+        weak_labels = args['weak_labels']
+        return get_model_preds(text, weak_labels, self.model, self.nlp)
 
 
 class WeakSupervision_dws(Resource):
@@ -87,19 +85,25 @@ class WeakSupervision_dws(Resource):
         self.model, self.nlp = setup_model('dws', running_locally=True)
 
     def get(self):
-        text, weak_labels = parse_texts_and_labels()
-        span_preds = [[None]*len(weak_labels)]
-        return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        parser.add_argument('weak_labels', type=dict, required=True)
+        args = parser.parse_args()
+        text = [args['texts']]
+        weak_labels = [args['weak_labels']]
+        print('TEXT: ', text)
+        print('WLS: ', weak_labels)
+        return get_model_preds(text, weak_labels, self.model, self.nlp)
 
 class PretrainNER_en_core_web_md(Resource):
     def __init__(self):
         self.model = spacy.load('en_core_web_md')
-        
+
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('texts', type=str, required=True)
         args = parser.parse_args()
-        print('TEXTS: ', args['texts'])
+
         texts = args['texts']
         return get_spacy_preds(texts, self.model)
 

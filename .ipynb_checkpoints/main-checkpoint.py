@@ -4,62 +4,163 @@ from flask import Flask
 from flask_restful import Resource, Api, reqparse
 from flair.data import Sentence
 from flair.models import SequenceTagger
-from skweak import aggregation
+from skweak_custom import aggregation
 import utils
 from utils import extract_preds, to_docs
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
-    AutoTokenizer)
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    pipeline)
 import spacy
 import torch
 from pretrainedNER.bert_inference import get_preds as get_bert_preds
 from pretrainedNER.spacy_get_preds import get_spacy_preds
 import pickle
 from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
+import ast 
+from torch.nn import functional as F
 
 app = Flask(__name__)
 api = Api(app)
 
-# class WeakSupervision_HMM(Resource):
-#     #def __init__(self):
-#
-#
-#     def get(texts: List[str], list_weak_labels: List[Dict[str, List[Any]]]):
-#         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
-#         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
-#
-#         docs, unique_labs = to_docs(texts, list_weak_labels, ignore_annotators=IGNORE_ANNOTATORS)
-#         f_ext = '' if __name__ == '__main__' else ''
-#         with open(f_ext + 'WSModels/hmm_conll.pkl', 'rb') as f:
-#             hmm = pickle.load(f)
-#
-#         print('UNQIUE labels: ', unique_labs)
-#         docs = list(hmm.pipe(docs))
-#
-#         # now turn back into dicts to return with list preds per doc
-#         preds_list = extract_preds(docs, 'hmm')
-#         return preds_list
+class Pretrained_Classification_Zero_Shot(Resource):
+    def __init__(self):
+        self.classifier = pipeline("zero-shot-classification",
+                              model="facebook/bart-large-mnli")        
+        
+    def get(self):
+        text, labels = parse_texts_and_zeroshotlabels()
+        
+        label_names_to_use = [x.replace('_', ' ') for x in labels]
+        label_mapping = {k:v for k,v in zip(label_names_to_use, labels)}        
+
+#         label_names_to_use = [x.replace('_', ' ') for x in label_names]
+#         label_mapping = {k:v for k,v in zip(label_names_to_use, label_names)}
+        #output = classifier(sentences, label_names_to_use) #candidate_labels)
+        output = self.classifier(text, labels) #candidate_labels)
+        print(output)
+        # convert to list of dictionaries of label_names to 
+        out = []
+        for el in output:
+            out.append({label_mapping[lab]:el['scores'][i] for i,lab in enumerate(el['labels'])})
+
+        return out
+        
+class Pretrained_Classification_Movie_Sentiment(Resource):
+    def __init__(self):
+        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model.eval()
+        self.classes = ['negative', 'positive']
+        
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        args = parser.parse_args()
+        texts = args['texts']
+        
+        if type(args['texts']) is not list:
+            texts = args['texts'].split(",")   
+            
+            
+        out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
+        with torch.no_grad():
+            preds = self.model(input_ids=torch.tensor(out['input_ids']), attention_mask=torch.tensor(out['attention_mask']))
+            preds = F.softmax(preds.logits, dim=1)
+
+        results = []
+        for p in preds:
+            results.append({k:p[i].item() for i,k in enumerate(self.classes)})
+    
+        return results        
+        
+class Pretrained_Classification_Fin_Sentiment(Resource):
+    def __init__(self):
+        self.tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+        self.model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+        self.model.eval()
+        self.classes = ['positive', 'negative', 'neutral']
+
+
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        args = parser.parse_args()
+        texts = args['texts']
+        
+        if type(args['texts']) is not list:
+            texts = args['texts'].split(",")        
+        
+        print("texts is " + str(texts))
+        out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
+        with torch.no_grad():
+            print(torch.tensor(out['input_ids']))
+            print(torch.tensor(out['attention_mask']))
+            preds = self.model(input_ids=torch.tensor(out['input_ids']), attention_mask=torch.tensor(out['attention_mask']))
+            preds = F.softmax(preds.logits, dim=1)
+
+        results = []
+        for p in preds:
+            results.append({k:p[i].item() for i,k in enumerate(self.classes)})
+
+        return out        
+        
+class WeakSupervision_HMM(Resource):
+   
+    def get(self):
+        IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
+        LABELS = ['MISC', 'PER', 'LOC', 'ORG']
+        
+        text, weak_labels = parse_texts_and_labels()
+
+        docs, unique_labs = to_docs(text, weak_labels, ignore_annotators=IGNORE_ANNOTATORS)
+        with open('WSModels/hmm_conll.pkl', 'rb') as f:
+            hmm = pickle.load(f)
+
+        print('UNQIUE labels: ', unique_labs)
+        docs = list(hmm.pipe(docs))
+
+        # now turn back into dicts to return with list preds per doc
+        preds_list = extract_preds(docs, 'hmm')
+        return preds_list
+
+    
+def parse_texts_and_zeroshotlabels():
+    parser = reqparse.RequestParser()
+    parser.add_argument('texts', type=str, required=True)
+    parser.add_argument('labels', type=str, required=True)
+    args = parser.parse_args()
+    text = ast.literal_eval(args['texts'])
+    labels = ast.literal_eval(args['labels'])
+    return text, labels
+
+
+def parse_texts_and_labels():
+    parser = reqparse.RequestParser()
+    parser.add_argument('texts', type=str, required=True)
+    parser.add_argument('weak_labels', type=str, required=True)
+    args = parser.parse_args()
+    text = ast.literal_eval(args['texts'])
+    weak_labels = ast.literal_eval(args['weak_labels'])
+    return text, weak_labels
 
 class WeakSupervision_MajorityVote(Resource):
     def __init__(self):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
 
-    def get(texts: List[str], list_weak_labels: List[Dict[str,List[Any]]]):
+    def get(self):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
+        text, weak_labels = parse_texts_and_labels()
 
-
-        if type(args['texts']) is not list:
-            texts = args['texts'].split(",")
-
+        #if type(args['texts']) is not list:
+        #    texts = args['texts'].split(",")
 
         # try with majority vote now
-        docs, unique_labs = to_docs(texts, list_weak_labels, ignore_annotators=IGNORE_ANNOTATORS, labels=LABELS)
+        docs, unique_labs = to_docs(text, weak_labels, ignore_annotators=IGNORE_ANNOTATORS, labels=LABELS)
 
         maj_voter = aggregation.MajorityVoterRev("majority_voter", list(unique_labs - set(['ENT'])))
         docs = list(maj_voter.pipe(docs)) #.fit_and_aggregate(docs)
@@ -71,13 +172,9 @@ class WeakSupervision_fuzzycrf(Resource):
         self.model, self.nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
 
     def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        parser.add_argument('weak_labels', type=dict, required=True)
-        args = parser.parse_args()
-        text = args['texts']
-        weak_labels = args['weak_labels']
-        return get_model_preds(text, weak_labels, self.model, self.nlp)
+        text, weak_labels = parse_texts_and_labels()
+        span_preds = [[None]*len(weak_labels)]
+        return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
 
 
 class WeakSupervision_dws(Resource):
@@ -85,25 +182,36 @@ class WeakSupervision_dws(Resource):
         self.model, self.nlp = setup_model('dws', running_locally=True)
 
     def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        parser.add_argument('weak_labels', type=dict, required=True)
-        args = parser.parse_args()
-        text = [args['texts']]
-        weak_labels = [args['weak_labels']]
-        print('TEXT: ', text)
-        print('WLS: ', weak_labels)
-        return get_model_preds(text, weak_labels, self.model, self.nlp)
+        text, weak_labels = parse_texts_and_labels()
+        span_preds = [[None]*len(weak_labels)]
+        return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
 
-class PretrainNER_en_core_web_md(Resource):
+    
+    
+class PretrainFinBert_HMM(Resource):
+    
     def __init__(self):
         self.model = spacy.load('en_core_web_md')
-
+    
+    
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('texts', type=str, required=True)
         args = parser.parse_args()
+        print('TEXTS: ', args['texts'])
+        texts = args['texts']
+        return get_spacy_preds(texts, self.model)
 
+    
+class PretrainNER_en_core_web_md(Resource):
+    def __init__(self):
+        self.model = spacy.load('en_core_web_md')
+        
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('texts', type=str, required=True)
+        args = parser.parse_args()
+        print('TEXTS: ', args['texts'])
         texts = args['texts']
         return get_spacy_preds(texts, self.model)
 
@@ -296,17 +404,22 @@ class PretrainNER_SNIPS(Resource):
 
         return preds_list
 
-api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
-api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
-api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
-api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
-api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
-api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
+# api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
+# api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
+# api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
+# api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
+# api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
+# api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
 
-api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
-api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')
+# api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
+# api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')
+# api.add_resource(WeakSupervision_HMM, '/weaksupervision/hmm')
+# api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')
 
 
+api.add_resource(Pretrained_Classification_Fin_Sentiment, '/pretrainedclassification/fin_sentiment')
+api.add_resource(Pretrained_Classification_Movie_Sentiment, '/pretrainedclassification/movie_sentiment')
+api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -14,9 +14,6 @@ def classify(sentences, **kwargs):
     out = tokenizer(sentences, padding=True, truncation=True, max_length=128)
     with torch.no_grad():
         preds = model(input_ids=torch.tensor(out['input_ids']), attention_mask=torch.tensor(out['attention_mask']))
-        
-        #preds = self.model(input_ids=torch.tensor(out['input_ids']), attention_mask=torch.tensor(out['attention_mask']))
-            
         preds = F.softmax(preds.logits, dim=1)
 
     out = []

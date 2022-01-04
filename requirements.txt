@@ -24,3 +24,9 @@ python3 -m spacy download en_core_web_md
 
 
 
+pip3 install flair
+pip3 install flask
+pip3 install flask_restful
+hmmlearn
+torchcrf
+pytorch-crf

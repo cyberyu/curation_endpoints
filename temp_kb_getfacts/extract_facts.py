@@ -13,24 +13,22 @@ sys.path.append(level_up)
 
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 
-
 from multiprocessing import Pool
-from process.process import parse_sentence
-from mapper.mapper import Map, deduplication
+from .process.process import parse_sentence
+from .mapper.mapper import Map, deduplication
 import argparse
 import en_core_web_md
 from tqdm import tqdm
 import json
 import requests
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
+from IPython import embed
 
 
-class OpenRE_get_facts():
+class OpenRE_get_facts:
     def __init__(self):
-        # use_cuda = args.use_cuda
         self.nlp = en_core_web_md.load()
 
         self.model_dict = {
@@ -270,8 +268,11 @@ class OpenRE_get_facts():
 
         return self.outputs
 
+
+ogf = OpenRE_get_facts()
+
+
 if __name__ == '__main__':
-    ogf = OpenRE_get_facts()
     res = ogf.get_facts('Playoff hockey is the hardest sport to watch. Especially, when the Vancouver Canucks are playing against the Boston Bruins.')
     # res contains the extract triplets of entity_relations
     print(res)

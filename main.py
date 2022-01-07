@@ -12,7 +12,9 @@ from transformers import (
     AutoModelForTokenClassification,
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    pipeline)
+    pipeline,
+    BertModel,
+    GPT2Model)
 import spacy
 import torch
 from pretrainedNER.bert_inference import get_preds as get_bert_preds
@@ -21,6 +23,7 @@ import pickle
 from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
 import ast
 from torch.nn import functional as F
+from temp_kb_getfacts.extract_facts import OpenRE_get_facts, ogf
 from IPython import embed
 
 app = Flask(__name__)
@@ -56,6 +59,23 @@ class Model:
 
         self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
         self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
+
+        # bertm = BertModel.from_pretrained('bert-large-cased')
+        # gpt2 = GPT2Model.from_pretrained('gpt2')
+        # self.rel_model_dict = {
+        #     'bert': bertm,
+        #     'gpt2': gpt2,
+        #     # 'finbert': AutoModel.from_pretrained('ProsusAI/finbert'),
+        #     # 'roberta': RobertaModel.from_pretrained('roberta-base')
+        # }
+        # bertt = AutoTokenizer.from_pretrained('bert-large-cased')
+        # gpt2t = AutoTokenizer.from_pretrained('gpt2')
+        # self.rel_tokenizer_dict = {
+        #     'bert': bertt,
+        #     'gpt2': gpt2t,
+        #     # 'finbert': AutoTokenizer.from_pretrained('ProsusAI/finbert'),
+        #     # 'roberta': RobertaTokenizer.from_pretrained('roberta-base')
+        # }
 
         print('model loading finished!')
 
@@ -410,6 +430,31 @@ class PretrainNER_SNIPS(Resource):
 
         return preds_list
 
+
+class RelationExtractor(Resource):
+    def __init__(self):
+        self.extractor = OpenRE_get_facts()
+
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
+
+        res = self.extractor.get_facts(texts)
+        results = []
+        for ele in res:
+            for e in ele['tri']:
+                relation = {}
+                relation['score'] = e['c']
+                relation['header'] = e['h']
+                relation['header_type'] = e['h_type']
+                relation['relation'] = e['r']
+                relation['tail'] = e['t']
+                relation['tail_type'] = e['t_type']
+                results.append(relation)
+
+        return results
+
+api.add_resource(RelationExtractor, '/relation')
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 api.add_resource(PretrainFinBert_HMM, '/pretrainNER/finbert_hmm')
 api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
@@ -428,4 +473,4 @@ api.add_resource(Pretrained_Classification_Movie_Sentiment, '/pretrainedclassifi
 api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

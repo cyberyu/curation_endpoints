@@ -163,6 +163,13 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_relation_extract(self):
+        url = host + '/relation'
+        data = {
+            'texts': 'Playoff hockey is the hardest sport to watch. Especially, when the Vancouver Canucks are playing against the Boston Bruins.'
+        }
+        result = call_api(url, data)
+        print(result)
 
 
 if __name__ == '__main__':

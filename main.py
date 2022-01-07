@@ -30,20 +30,21 @@ parser = reqparse.RequestParser()
 
 class Model:
     def __init__(self):
-        # self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
-        # self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
-        #
-        # self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-        #
-        # self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        # self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        # self.model.eval()
+        self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
+        self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
 
-        # self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-        # self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
-        # self.fin_model.eval()
+        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model.eval()
+
+        self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+        self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+        self.fin_model.eval()
 
         self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
+        self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
 
 model = Model()
 
@@ -214,13 +215,13 @@ class WeakSupervision_fuzzycrf(Resource):
 
 class WeakSupervision_dws(Resource):
     def __init__(self):
-        self.model, self.nlp = setup_model('dws', running_locally=True)
+        self.model = model.dws_model
+        self.nlp = model.dws_nlp
 
-    def get(self):
+    def post(self):
         text, weak_labels = parse_texts_and_labels()
         span_preds = [[None]*len(weak_labels)]
         return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
-
 
 
 class PretrainFinBert_HMM(Resource):
@@ -441,7 +442,7 @@ api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 # api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
 # api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
 
-# api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
+api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
 api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')
 api.add_resource(WeakSupervision_HMM, '/weaksupervision/hmm')
 api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')

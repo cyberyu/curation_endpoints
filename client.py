@@ -32,9 +32,9 @@ import requests
 # print('Fuzzy CRF RESPONSE: ', response.text)
 
 
-# preclassify_sentiment_url = "http://127.0.0.1:5000/pretrainedclassification/fin_sentiment?texts=['Stocks rallied and the British pound gained.']"
-# response = requests.request("GET", preclassify_sentiment_url, headers={}, data={})
-# print('Preclassified Sentiment: ', response.text)
+preclassify_sentiment_url = "http://127.0.0.1:5000/pretrainedclassification/fin_sentiment?texts=['Stocks rallied and the British pound gained.']"
+response = requests.request("GET", preclassify_sentiment_url, headers={}, data={})
+print('Preclassified Sentiment: ', response.text)
 
 
 # preclassify_sentiment_url = "http://127.0.0.1:5000/pretrainedclassification/movie_sentiment?texts=['I really liked that.', 'Why was it so boring.']"
@@ -42,6 +42,6 @@ import requests
 # print('Preclassified Sentiment: ', response.text)
 
 
-preclassify_zero_shot_url = "http://127.0.0.1:5000/pretrainedclassification/zero_shot?texts=['I really liked that.', 'Why was it so boring.']&labels=['travel', 'cooking', 'dancing']"
-response = requests.request("GET", preclassify_zero_shot_url, headers={}, data={})
-print('Preclassified Sentiment: ', response.text)
+# preclassify_zero_shot_url = "http://127.0.0.1:5000/pretrainedclassification/zero_shot?texts=['I really liked that.', 'Why was it so boring.']&labels=['travel', 'cooking', 'dancing']"
+# response = requests.request("GET", preclassify_zero_shot_url, headers={}, data={})
+# print('Preclassified Sentiment: ', response.text)

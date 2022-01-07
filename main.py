@@ -30,14 +30,18 @@ parser = reqparse.RequestParser()
 
 class Model:
     def __init__(self):
-        self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
-        self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+        # self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
+        # self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+        #
+        # self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        #
+        # self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        # self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        # self.model.eval()
 
-        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-
-        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        self.model.eval()
+        self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+        self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+        self.fin_model.eval()
 
 model = Model()
 
@@ -96,22 +100,23 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
 
         return results
 
+
 class Pretrained_Classification_Fin_Sentiment(Resource):
     def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-        self.model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
-        self.model.eval()
+        self.tokenizer = model.fin_tokenizer
+        self.model = model.fin_model
         self.classes = ['positive', 'negative', 'neutral']
 
-
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-        texts = args['texts']
-
-        if type(args['texts']) is not list:
-            texts = args['texts'].split(",")
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
+        # parser = reqparse.RequestParser()
+        # parser.add_argument('texts', type=str, required=True)
+        # args = parser.parse_args()
+        # texts = args['texts']
+        #
+        # if type(args['texts']) is not list:
+        #     texts = args['texts'].split(",")
 
         print("texts is " + str(texts))
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
@@ -123,12 +128,12 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
 
         results = []
         for p in preds:
-            results.append({k:p[i].item() for i,k in enumerate(self.classes)})
+            results.append({k:p[i].item() for i, k in enumerate(self.classes)})
 
-        return out
+        return results
+
 
 class WeakSupervision_HMM(Resource):
-
     def get(self):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']

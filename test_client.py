@@ -33,10 +33,18 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
-    def test_movie_setiment(self):
+    def test_movie_sentiment(self):
         url = host + '/pretrainedclassification/movie_sentiment'
         data = {
             'texts': ['I really liked that.', 'Why was it so boring.']
+        }
+        result = call_api(url, data)
+        print(result)
+
+    def test_fin_sentiment(self):
+        url = host + '/pretrainedclassification/fin_sentiment'
+        data = {
+            'texts': ['Stocks rallied and the British pound gained.']
         }
         result = call_api(url, data)
         print(result)

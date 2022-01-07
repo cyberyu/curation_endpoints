@@ -24,6 +24,15 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_zeroshot(self):
+        data = {
+            'texts': ['I really liked that.', 'Why was it so boring.'],
+            'labels': ['travel', 'cooking', 'dancing']
+        }
+        url = host + '/pretrainedclassification/zero_shot'
+        result = call_api(url, data)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

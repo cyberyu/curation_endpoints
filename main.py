@@ -33,16 +33,20 @@ class Model:
         self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
         self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
 
+        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
 model = Model()
 
 
 class Pretrained_Classification_Zero_Shot(Resource):
     def __init__(self):
-        self.classifier = pipeline("zero-shot-classification",
-                              model="facebook/bart-large-mnli")
+        self.classifier = model.zero_shot_classifier
 
-    def get(self):
-        text, labels = parse_texts_and_zeroshotlabels()
+    def post(self):
+        data = request.get_json()
+        text = data['texts']
+        labels = data['labels']
+        # text, labels = parse_texts_and_zeroshotlabels()
 
         label_names_to_use = [x.replace('_', ' ') for x in labels]
         label_mapping = {k:v for k,v in zip(label_names_to_use, labels)}
@@ -55,7 +59,7 @@ class Pretrained_Classification_Zero_Shot(Resource):
         # convert to list of dictionaries of label_names to
         out = []
         for el in output:
-            out.append({label_mapping[lab]:el['scores'][i] for i,lab in enumerate(el['labels'])})
+            out.append({label_mapping[lab]: el['scores'][i] for i, lab in enumerate(el['labels'])})
 
         return out
 

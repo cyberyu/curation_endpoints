@@ -134,11 +134,14 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
 
 
 class WeakSupervision_HMM(Resource):
-    def get(self):
+    def post(self):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
 
-        text, weak_labels = parse_texts_and_labels()
+        data = request.get_json()
+        text = data['texts']
+        weak_labels = data['weak_labels']
+        # text, weak_labels = parse_texts_and_labels()
 
         docs, unique_labs = to_docs(text, weak_labels, ignore_annotators=IGNORE_ANNOTATORS)
         with open('WSModels/hmm_conll.pkl', 'rb') as f:
@@ -424,8 +427,8 @@ class PretrainNER_SNIPS(Resource):
 
         return preds_list
 
-# api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
+# api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
 # api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
 # api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
 # api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
@@ -433,7 +436,7 @@ api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 
 # api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
 # api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')
-# api.add_resource(WeakSupervision_HMM, '/weaksupervision/hmm')
+api.add_resource(WeakSupervision_HMM, '/weaksupervision/hmm')
 # api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')
 
 

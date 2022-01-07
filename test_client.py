@@ -49,6 +49,21 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_weaksupervision_hmm(self):
+        url = host + '/weaksupervision/hmm'
+        data = {
+            'texts': ['Joe went to Chicago.'],
+            'weak_labels':
+                [
+                    {
+                        'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],
+                        'crunchbase_uncased': [{'name': 'ORG', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}]
+                    }
+                ]
+        }
+        result = call_api(url, data)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

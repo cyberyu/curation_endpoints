@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 import snips_nlu_parsers
-from flask import Flask
+from flask import Flask, request
 from flask_restful import Resource, Api, reqparse
 from flair.data import Sentence
 from flair.models import SequenceTagger
@@ -19,52 +19,64 @@ from pretrainedNER.bert_inference import get_preds as get_bert_preds
 from pretrainedNER.spacy_get_preds import get_spacy_preds
 import pickle
 from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
-import ast 
+import ast
 from torch.nn import functional as F
+from IPython import embed
 
 app = Flask(__name__)
 api = Api(app)
+parser = reqparse.RequestParser()
+
+
+class Model:
+    def __init__(self):
+        self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
+        self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+
+model = Model()
+
 
 class Pretrained_Classification_Zero_Shot(Resource):
     def __init__(self):
         self.classifier = pipeline("zero-shot-classification",
-                              model="facebook/bart-large-mnli")        
-        
+                              model="facebook/bart-large-mnli")
+
     def get(self):
         text, labels = parse_texts_and_zeroshotlabels()
-        
+
         label_names_to_use = [x.replace('_', ' ') for x in labels]
-        label_mapping = {k:v for k,v in zip(label_names_to_use, labels)}        
+        label_mapping = {k:v for k,v in zip(label_names_to_use, labels)}
 
 #         label_names_to_use = [x.replace('_', ' ') for x in label_names]
 #         label_mapping = {k:v for k,v in zip(label_names_to_use, label_names)}
         #output = classifier(sentences, label_names_to_use) #candidate_labels)
         output = self.classifier(text, labels) #candidate_labels)
         print(output)
-        # convert to list of dictionaries of label_names to 
+        # convert to list of dictionaries of label_names to
         out = []
         for el in output:
             out.append({label_mapping[lab]:el['scores'][i] for i,lab in enumerate(el['labels'])})
 
         return out
-        
+
+
 class Pretrained_Classification_Movie_Sentiment(Resource):
     def __init__(self):
         self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
         self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
         self.model.eval()
         self.classes = ['negative', 'positive']
-        
+
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('texts', type=str, required=True)
         args = parser.parse_args()
         texts = args['texts']
-        
+
         if type(args['texts']) is not list:
-            texts = args['texts'].split(",")   
-            
-            
+            texts = args['texts'].split(",")
+
+
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
         with torch.no_grad():
             preds = self.model(input_ids=torch.tensor(out['input_ids']), attention_mask=torch.tensor(out['attention_mask']))
@@ -73,9 +85,9 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
         results = []
         for p in preds:
             results.append({k:p[i].item() for i,k in enumerate(self.classes)})
-    
-        return results        
-        
+
+        return results
+
 class Pretrained_Classification_Fin_Sentiment(Resource):
     def __init__(self):
         self.tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
@@ -89,10 +101,10 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
         parser.add_argument('texts', type=str, required=True)
         args = parser.parse_args()
         texts = args['texts']
-        
+
         if type(args['texts']) is not list:
-            texts = args['texts'].split(",")        
-        
+            texts = args['texts'].split(",")
+
         print("texts is " + str(texts))
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
         with torch.no_grad():
@@ -105,14 +117,14 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
         for p in preds:
             results.append({k:p[i].item() for i,k in enumerate(self.classes)})
 
-        return out        
-        
+        return out
+
 class WeakSupervision_HMM(Resource):
-   
+
     def get(self):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
-        
+
         text, weak_labels = parse_texts_and_labels()
 
         docs, unique_labs = to_docs(text, weak_labels, ignore_annotators=IGNORE_ANNOTATORS)
@@ -126,7 +138,7 @@ class WeakSupervision_HMM(Resource):
         preds_list = extract_preds(docs, 'hmm')
         return preds_list
 
-    
+
 def parse_texts_and_zeroshotlabels():
     parser = reqparse.RequestParser()
     parser.add_argument('texts', type=str, required=True)
@@ -186,14 +198,14 @@ class WeakSupervision_dws(Resource):
         span_preds = [[None]*len(weak_labels)]
         return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
 
-    
-    
+
+
 class PretrainFinBert_HMM(Resource):
-    
+
     def __init__(self):
         self.model = spacy.load('en_core_web_md')
-    
-    
+
+
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('texts', type=str, required=True)
@@ -202,11 +214,11 @@ class PretrainFinBert_HMM(Resource):
         texts = args['texts']
         return get_spacy_preds(texts, self.model)
 
-    
+
 class PretrainNER_en_core_web_md(Resource):
     def __init__(self):
         self.model = spacy.load('en_core_web_md')
-        
+
     def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument('texts', type=str, required=True)
@@ -274,26 +286,21 @@ class PretrainNER_distillbert(Resource):
 
         return get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
 
+
+
+
 class PretrainNER_FLAIR(Resource):
 
     def __init__(self):
-
         # load the NER tagger
-        self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
+        self.flair_model = model.flair_model
 
         # load small spacy model to chunk the text into sentences
-        self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+        self.spacy_model = model.spacy_model
 
-    def get(self):
-
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-
-
-        if type(args['texts']) is not list:
-            texts = args['texts'].split(",")
-            #texts = [texts]
+    def post(self):
+        args = request.get_json()
+        texts = args['texts']
 
         preds_list = []
         for text in texts:
@@ -405,7 +412,7 @@ class PretrainNER_SNIPS(Resource):
         return preds_list
 
 # api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
-# api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
+api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 # api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
 # api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
 # api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')

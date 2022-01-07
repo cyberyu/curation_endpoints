@@ -27,6 +27,18 @@ python3 -m spacy download en_core_web_md
 pip3 install flair
 pip3 install flask
 pip3 install flask_restful
-hmmlearn
+hmmlearn~=0.2.6
 torchcrf
 pytorch-crf
+
+torch~=1.7.1
+numpy~=1.19.5
+spacy~=3.0.6
+transformers~=4.5.1
+seqeval~=1.2.2
+Flask~=2.0.2
+flair~=0.9
+ipython~=7.24.1
+requests~=2.25.1
+pandas~=1.2.5
+skweak~=0.2.13

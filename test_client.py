@@ -64,6 +64,36 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_weaksupervision_majority_vote(self):
+        url = host + '/weaksupervision/maj_vote'
+        data = {
+            'texts': ['Joe went to Chicago.'],
+            'weak_labels':
+                [
+                    {
+                        'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],
+                        'crunchbase_uncased': [{'name': 'ORG', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}]
+                    }
+                ]
+        }
+        result = call_api(url, data)
+        print(result)
+
+    def test_weaksupervision_fuzzycrf(self):
+        url = host + '/weaksupervision/fcrf'
+        data = {
+            'texts': ['Joe went to Chicago.'],
+            'weak_labels':
+                [
+                    {
+                        'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],
+                        'crunchbase_uncased': [{'name': 'ORG', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}]
+                    }
+                ]
+        }
+        result = call_api(url, data)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

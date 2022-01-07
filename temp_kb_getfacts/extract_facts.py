@@ -27,8 +27,8 @@ import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
-class OpenRE_get_facts():
 
+class OpenRE_get_facts():
     def __init__(self):
         # use_cuda = args.use_cuda
         self.nlp = en_core_web_md.load()
@@ -38,7 +38,6 @@ class OpenRE_get_facts():
             'gpt2': GPT2Model.from_pretrained('gpt2'),
             # 'finbert': AutoModel.from_pretrained('ProsusAI/finbert'),
             # 'roberta': RobertaModel.from_pretrained('roberta-base')
-
         }
 
         self.tokenizer_dict = {
@@ -59,7 +58,6 @@ class OpenRE_get_facts():
             raise argparse.ArgumentTypeError('Boolean value expected.')
 
     def fixsize_perplexity(encodings):
-
         device = "cpu"
         model_id = "distilgpt2"
         model = GPT2LMHeadModel.from_pretrained(model_id).to(device)
@@ -162,7 +160,6 @@ class OpenRE_get_facts():
 
         # return triplet_dict
         # return modified_output
-
 
     def get_facts(self, input_text, model_type='bert', use_filter=False, tree_weight=0.0, debug=False, filter=False):
         """
@@ -281,7 +278,6 @@ if __name__ == '__main__':
 
     # expand and extract them one by one
     #for ele in res.json()['result']:
-
     for ele in res:
         for e in ele['tri']:
             print('An extracted triplet has c_score {}, header_entity {}, header_type {}, relation {}. tail_entity {}, tail_type {}'.format(

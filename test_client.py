@@ -24,6 +24,42 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_finbert_hmm(self):
+        data = {
+            'texts': ['I went to Victoria this holiday.',
+                      'How is weather in Chicago?']
+        }
+        url = host + '/pretrainNER/finbert_hmm'
+        result = call_api(url, data)
+        print(result)
+
+    def test_web_trf(self):
+        data = {
+            'texts': ['Calgary is hot in the July.',
+                      'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
+        }
+        url = host + '/pretrainNER/en_core_web_trf'
+        result = call_api(url, data)
+        print(result)
+
+    def test_web_md(self):
+        data = {
+            'texts': ['Calgary is hot in the July.',
+                      'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
+        }
+        url = host + '/pretrainNER/en_core_web_trf'
+        result = call_api(url, data)
+        print(result)
+
+    def test_snips(self):
+        data = {
+            'texts': ['Calgary is hot in the July.',
+                      'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
+        }
+        url = host + '/pretrainNER/snips'
+        result = call_api(url, data)
+        print(result)
+
     def test_zeroshot(self):
         data = {
             'texts': ['I really liked that.', 'Why was it so boring.'],
@@ -108,6 +144,7 @@ class ClientTest(unittest.TestCase):
         }
         result = call_api(url, data)
         print(result)
+
 
 
 if __name__ == '__main__':

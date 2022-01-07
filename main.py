@@ -30,21 +30,24 @@ parser = reqparse.RequestParser()
 
 class Model:
     def __init__(self):
-        self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
-        self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+        # self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
+        # self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+        # self.spacy_model_all = spacy.load('en_core_web_md')
+        # self.spacy_model_trf = spacy.load('en_core_web_trf')
+        self.snips_parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
 
-        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-
-        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        self.model.eval()
-
-        self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-        self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
-        self.fin_model.eval()
-
-        self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
-        self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
+        # self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        #
+        # self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        # self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        # self.model.eval()
+        #
+        # self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+        # self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+        # self.fin_model.eval()
+        #
+        # self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
+        # self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
 
         print('model loading finished!')
 
@@ -227,43 +230,32 @@ class WeakSupervision_dws(Resource):
 
 
 class PretrainFinBert_HMM(Resource):
-
     def __init__(self):
-        self.model = spacy.load('en_core_web_md')
+        self.model = model.spacy_model_all
 
-
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-        print('TEXTS: ', args['texts'])
-        texts = args['texts']
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
         return get_spacy_preds(texts, self.model)
 
 
 class PretrainNER_en_core_web_md(Resource):
     def __init__(self):
-        self.model = spacy.load('en_core_web_md')
+        self.model = model.spacy_model_all
 
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-        print('TEXTS: ', args['texts'])
-        texts = args['texts']
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
         return get_spacy_preds(texts, self.model)
 
 
 class PretrainNER_en_core_web_trf(Resource):
     def __init__(self):
-        self.model = spacy.load('en_core_web_trf')
+        self.model = model.spacy_model_trf
 
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-
-        texts = args['texts']
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
         return get_spacy_preds(texts, self.model)
 
 
@@ -289,15 +281,13 @@ class PretrainNER_roberta(Resource):
 
 class PretrainNER_distillbert(Resource):
     def __init__(self):
-
         f_prefix = ''
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilbert_hmm').to(self.device)
         self.tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased', use_fast=True)
 
-        self.nlp = spacy.load('en_core_web_sm', exclude=[
-            'ner'])  # want to align our preds with spacy's tokens (our training was in similar format where each word we only predicted it's beginning token)
-
+        # want to align our preds with spacy's tokens (our training was in similar format where each word we only predicted it's beginning token)
+        self.nlp = spacy.load('en_core_web_sm', exclude=['ner'])
 
     def get(self):
         parser = reqparse.RequestParser()
@@ -311,8 +301,6 @@ class PretrainNER_distillbert(Resource):
         #     #texts = [texts]
 
         return get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
-
-
 
 
 class PretrainNER_FLAIR(Resource):
@@ -369,25 +357,17 @@ class PretrainNER_FLAIR(Resource):
 
 
 class PretrainNER_SNIPS(Resource):
-
     def __init__(self):
-        self.parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
+        self.parser = model.snips_parser
 
-    def get(self):
+    def post(self):
         """ for now texts is list of strings
         Output: list of lists of character spans along with label for each text predictions
         """
-
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-
-
-        if type(args['texts']) is not list:
-            texts = args['texts'].split(",")
-            #texts = [texts]
-
+        data = request.get_json()
+        texts = data['texts']
         print(texts)
+
         preds_list = []
         for text in texts:
             spans = []
@@ -438,17 +418,17 @@ class PretrainNER_SNIPS(Resource):
         return preds_list
 
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
-# api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
+api.add_resource(PretrainFinBert_HMM, '/pretrainNER/finbert_hmm')
+api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
+api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
+api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
 # api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
 # api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
-# api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
-# api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
 
 api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
 api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')
 api.add_resource(WeakSupervision_HMM, '/weaksupervision/hmm')
 api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')
-
 
 api.add_resource(Pretrained_Classification_Fin_Sentiment, '/pretrainedclassification/fin_sentiment')
 api.add_resource(Pretrained_Classification_Movie_Sentiment, '/pretrainedclassification/movie_sentiment')

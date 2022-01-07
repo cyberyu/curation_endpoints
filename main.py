@@ -46,6 +46,8 @@ class Model:
         self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
         self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
 
+        print('model loading finished!')
+
 model = Model()
 
 

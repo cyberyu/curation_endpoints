@@ -35,6 +35,10 @@ class Model:
 
         self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
+        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model.eval()
+
 model = Model()
 
 
@@ -66,20 +70,20 @@ class Pretrained_Classification_Zero_Shot(Resource):
 
 class Pretrained_Classification_Movie_Sentiment(Resource):
     def __init__(self):
-        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        self.model.eval()
+        self.tokenizer = model.tokenizer
+        self.model = model.model
         self.classes = ['negative', 'positive']
 
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-        texts = args['texts']
-
-        if type(args['texts']) is not list:
-            texts = args['texts'].split(",")
-
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
+        # parser = reqparse.RequestParser()
+        # parser.add_argument('texts', type=str, required=True)
+        # args = parser.parse_args()
+        # texts = args['texts']
+        #
+        # if type(args['texts']) is not list:
+        #     texts = args['texts'].split(",")
 
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
         with torch.no_grad():

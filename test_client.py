@@ -33,6 +33,14 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_movie_setiment(self):
+        url = host + '/pretrainedclassification/movie_sentiment'
+        data = {
+            'texts': ['I really liked that.', 'Why was it so boring.']
+        }
+        result = call_api(url, data)
+        print(result)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -60,6 +60,24 @@ class ClientTest(unittest.TestCase):
         result = call_api(url, data)
         print(result)
 
+    def test_roberta(self):
+        data = {
+            'texts': ['Calgary is hot in the July.',
+                      'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
+        }
+        url = host + '/pretrainNER/roberta'
+        result = call_api(url, data)
+        print(result)
+
+    def test_distilbert(self):
+        data = {
+            'texts': ['Calgary is hot in the July.',
+                      'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
+        }
+        url = host + '/pretrainNER/distilbert'
+        result = call_api(url, data)
+        print(result)
+
     def test_zeroshot(self):
         data = {
             'texts': ['I really liked that.', 'Why was it so boring.'],

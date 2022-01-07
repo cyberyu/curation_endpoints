@@ -31,10 +31,18 @@ parser = reqparse.RequestParser()
 class Model:
     def __init__(self):
         # self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
-        # self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
+        self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
         # self.spacy_model_all = spacy.load('en_core_web_md')
         # self.spacy_model_trf = spacy.load('en_core_web_trf')
         self.snips_parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
+
+        f_prefix = ''
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.roberta_model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilroberta_hmm').to(device)
+        self.roberta_tokenizer = AutoTokenizer.from_pretrained('distilroberta-base', use_fast=True, add_prefix_space=True)
+
+        self.distilbert_model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilbert_hmm').to(device)
+        self.distilbert_tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased', use_fast=True)
 
         # self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
         #
@@ -263,48 +271,33 @@ class PretrainNER_roberta(Resource):
     def __init__(self):
         f_prefix = ''
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilroberta_hmm').to(self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained('distilroberta-base', use_fast=True, add_prefix_space=True)
+        self.model = model.roberta_model
+        self.tokenizer = model.roberta_tokenizer
+        # want to align our preds with spacy's tokens (our training was in similar format where each word we only predicted it's beginning token)
+        self.nlp = model.spacy_model
 
-        self.nlp = spacy.load('en_core_web_sm', exclude=[
-            'ner'])  # want to align our preds with spacy's tokens (our training was in similar format where each word we only predicted it's beginning token)
-
-
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-
-        texts = args['texts']
-
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
         return get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
 
-class PretrainNER_distillbert(Resource):
+
+class PretrainNER_distilbert(Resource):
     def __init__(self):
         f_prefix = ''
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilbert_hmm').to(self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased', use_fast=True)
-
+        self.model = model.distilbert_model
+        self.tokenizer = model.distilbert_tokenizer
         # want to align our preds with spacy's tokens (our training was in similar format where each word we only predicted it's beginning token)
-        self.nlp = spacy.load('en_core_web_sm', exclude=['ner'])
+        self.nlp = model.spacy_model
 
-    def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('texts', type=str, required=True)
-        args = parser.parse_args()
-
-        texts = args['texts']
-
-        # if type(args['texts']) is not list:
-        #     texts = args['texts'].split(",")
-        #     #texts = [texts]
-
+    def post(self):
+        data = request.get_json()
+        texts = data['texts']
         return get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
 
 
 class PretrainNER_FLAIR(Resource):
-
     def __init__(self):
         # load the NER tagger
         self.flair_model = model.flair_model
@@ -422,8 +415,8 @@ api.add_resource(PretrainFinBert_HMM, '/pretrainNER/finbert_hmm')
 api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
 api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
 api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
-# api.add_resource(PretrainNER_distillbert, '/pretrainNER/distillbert')
-# api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
+api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
+api.add_resource(PretrainNER_distilbert, '/pretrainNER/distilbert')
 
 api.add_resource(WeakSupervision_dws, '/weaksupervision/dws')
 api.add_resource(WeakSupervision_fuzzycrf, '/weaksupervision/fcrf')

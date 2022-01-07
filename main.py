@@ -30,10 +30,10 @@ parser = reqparse.RequestParser()
 
 class Model:
     def __init__(self):
-        # self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
+        self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
         self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
-        # self.spacy_model_all = spacy.load('en_core_web_md')
-        # self.spacy_model_trf = spacy.load('en_core_web_trf')
+        self.spacy_model_all = spacy.load('en_core_web_md')
+        self.spacy_model_trf = spacy.load('en_core_web_trf')
         self.snips_parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
 
         f_prefix = ''
@@ -44,18 +44,18 @@ class Model:
         self.distilbert_model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilbert_hmm').to(device)
         self.distilbert_tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased', use_fast=True)
 
-        # self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-        #
-        # self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        # self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
-        # self.model.eval()
-        #
-        # self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
-        # self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
-        # self.fin_model.eval()
-        #
-        # self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
-        # self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
+        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+        self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
+        self.model.eval()
+
+        self.fin_tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+        self.fin_model = AutoModelForSequenceClassification.from_pretrained("ProsusAI/finbert")
+        self.fin_model.eval()
+
+        self.fuzzycrf_model, self.fuzzycrf_nlp = setup_model(model_extension='fuzzy_crf', running_locally=True)
+        self.dws_model, self.dws_nlp =setup_model('dws', running_locally=True)
 
         print('model loading finished!')
 

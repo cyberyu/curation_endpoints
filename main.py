@@ -23,7 +23,7 @@ import pickle
 from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
 import ast
 from torch.nn import functional as F
-from temp_kb_getfacts.extract_facts import OpenRE_get_facts, ogf
+from temp_kb_getfacts.extract_facts import OpenRE_get_facts
 from IPython import embed
 
 app = Flask(__name__)
@@ -33,6 +33,8 @@ parser = reqparse.RequestParser()
 
 class Model:
     def __init__(self):
+        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
         self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
         self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
         self.spacy_model_all = spacy.load('en_core_web_md')
@@ -46,8 +48,6 @@ class Model:
 
         self.distilbert_model = AutoModelForTokenClassification.from_pretrained(f_prefix + 'trained_models/distilbert_hmm').to(device)
         self.distilbert_tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased', use_fast=True)
-
-        self.zero_shot_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
         self.tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
         self.model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased-finetuned-sst-2-english")
@@ -454,7 +454,6 @@ class RelationExtractor(Resource):
 
         return results
 
-api.add_resource(RelationExtractor, '/relation')
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 api.add_resource(PretrainFinBert_HMM, '/pretrainNER/finbert_hmm')
 api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
@@ -471,6 +470,8 @@ api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')
 api.add_resource(Pretrained_Classification_Fin_Sentiment, '/pretrainedclassification/fin_sentiment')
 api.add_resource(Pretrained_Classification_Movie_Sentiment, '/pretrainedclassification/movie_sentiment')
 api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
+
+api.add_resource(RelationExtractor, '/relation')
 
 if __name__ == '__main__':
     app.run(debug=False)

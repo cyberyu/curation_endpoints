@@ -269,10 +269,8 @@ class OpenRE_get_facts:
         return self.outputs
 
 
-ogf = OpenRE_get_facts()
-
-
 if __name__ == '__main__':
+    ogf = OpenRE_get_facts()
     res = ogf.get_facts('Playoff hockey is the hardest sport to watch. Especially, when the Vancouver Canucks are playing against the Boston Bruins.')
     # res contains the extract triplets of entity_relations
     print(res)

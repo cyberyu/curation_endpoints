@@ -174,10 +174,10 @@ class WeakSupervision_HMM(Resource):
         IGNORE_ANNOTATORS = ['core_web', 'doc_', 'doclevel']
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
 
-        data = request.get_json()
-        text = data['data']['texts']
-        weak_labels = data['weak_labels']
-        # text, weak_labels = parse_texts_and_labels()
+        # data = request.get_json()
+        # text = data['data']['texts']
+        # weak_labels = data['weak_labels']
+        text, weak_labels = parse_texts_and_labels()
 
         docs, unique_labs = to_docs(text, weak_labels, ignore_annotators=IGNORE_ANNOTATORS)
         with open('WSModels/hmm_conll.pkl', 'rb') as f:
@@ -204,7 +204,7 @@ def parse_texts_and_zeroshotlabels():
 def parse_texts_and_labels():
     data = request.get_json()
     text = data['data']['texts']
-    weak_labels = data['weak_labels']
+    weak_labels = data['data']['list_weak_labels']
     # parser = reqparse.RequestParser()
     # parser.add_argument('texts', type=str, required=True)
     # parser.add_argument('weak_labels', type=str, required=True)

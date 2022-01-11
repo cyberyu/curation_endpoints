@@ -107,7 +107,7 @@ class ClientTest(unittest.TestCase):
         url = host + '/weaksupervision/hmm'
         data = {
             'texts': ['Joe went to Chicago.'],
-            'weak_labels':
+            'list_weak_labels':
                 [
                     {
                         'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],
@@ -122,7 +122,7 @@ class ClientTest(unittest.TestCase):
         url = host + '/weaksupervision/maj_vote'
         data = {
             'texts': ['Joe went to Chicago.'],
-            'weak_labels':
+            'list_weak_labels':
                 [
                     {
                         'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],
@@ -137,7 +137,7 @@ class ClientTest(unittest.TestCase):
         url = host + '/weaksupervision/fcrf'
         data = {
             'texts': ['Joe went to Chicago.'],
-            'weak_labels':
+            'list_weak_labels':
                 [
                     {
                         'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],
@@ -152,7 +152,7 @@ class ClientTest(unittest.TestCase):
         url = host + '/weaksupervision/dws'
         data = {
             'texts': ['Joe went to Chicago.'],
-            'weak_labels':
+            'list_weak_labels':
                 [
                     {
                         'crunchbase_cased': [{'name': 'PER', 'pos': [0, 2], 'tpos': [0, 0], 'text': 'Joe', 'confidence': 1}],

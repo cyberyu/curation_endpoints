@@ -14,8 +14,8 @@ sys.path.append(level_up)
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 
 from multiprocessing import Pool
-from .process.process import parse_sentence
-from .mapper.mapper import Map, deduplication
+from process.process import parse_sentence
+from mapper.mapper import Map, deduplication
 import argparse
 import en_core_web_md
 from tqdm import tqdm

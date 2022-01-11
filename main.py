@@ -23,7 +23,6 @@ import pickle
 from WSCode.inference import get_model_preds, get_conll_base_flags, setup_model
 import ast
 from torch.nn import functional as F
-from temp_kb_getfacts.extract_facts import OpenRE_get_facts
 from IPython import embed
 
 app = Flask(__name__)
@@ -38,7 +37,7 @@ class Model:
         self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
         self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
         self.spacy_model_all = spacy.load('en_core_web_md')
-        # self.spacy_model_trf = spacy.load('en_core_web_trf')
+        self.spacy_model_trf = spacy.load('en_core_web_trf')
         self.snips_parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
 
         f_prefix = ''
@@ -89,7 +88,7 @@ class Pretrained_Classification_Zero_Shot(Resource):
     def post(self):
         data = request.get_json()
         text = data['data']['texts']
-        labels = data['labels']
+        labels = data['data']['labels']
         # text, labels = parse_texts_and_zeroshotlabels()
 
         label_names_to_use = [x.replace('_', ' ') for x in labels]
@@ -286,7 +285,7 @@ class PretrainNER_en_core_web_trf(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
+        texts = data['data']['texts']
         return {'result': get_spacy_preds(texts, self.model)}
 
 
@@ -435,32 +434,9 @@ class PretrainNER_SNIPS(Resource):
         return {'result': preds_list}
 
 
-class RelationExtractor(Resource):
-    def __init__(self):
-        self.extractor = OpenRE_get_facts()
-
-    def post(self):
-        data = request.get_json()
-        texts = data['data']['texts']
-
-        res = self.extractor.get_facts(texts)
-        results = []
-        for ele in res:
-            for e in ele['tri']:
-                relation = {}
-                relation['score'] = e['c']
-                relation['header'] = e['h']
-                relation['header_type'] = e['h_type']
-                relation['relation'] = e['r']
-                relation['tail'] = e['t']
-                relation['tail_type'] = e['t_type']
-                results.append(relation)
-
-        return {'result': results}
-
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 api.add_resource(PretrainFinBert_HMM, '/pretrainNER/finbert_hmm')
-# api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
+api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
 api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
 api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
 api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
@@ -473,9 +449,9 @@ api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')
 
 api.add_resource(Pretrained_Classification_Fin_Sentiment, '/pretrainedclassification/fin_sentiment')
 api.add_resource(Pretrained_Classification_Movie_Sentiment, '/pretrainedclassification/movie_sentiment')
-# api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
+api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
 
-api.add_resource(RelationExtractor, '/relation')
+# api.add_resource(RelationExtractor, '/relation')
 
 if __name__ == '__main__':
     app.run(debug=False)

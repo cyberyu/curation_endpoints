@@ -21,7 +21,7 @@ class ClientTest(unittest.TestCase):
                       'How is weather in Chicago?']
         }
         url = host + '/pretrainNER/flair'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_finbert_hmm(self):
@@ -30,7 +30,7 @@ class ClientTest(unittest.TestCase):
                       'How is weather in Chicago?']
         }
         url = host + '/pretrainNER/finbert_hmm'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_web_trf(self):
@@ -39,7 +39,7 @@ class ClientTest(unittest.TestCase):
                       'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
         }
         url = host + '/pretrainNER/en_core_web_trf'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_web_md(self):
@@ -48,7 +48,7 @@ class ClientTest(unittest.TestCase):
                       'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
         }
         url = host + '/pretrainNER/en_core_web_trf'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_snips(self):
@@ -57,7 +57,7 @@ class ClientTest(unittest.TestCase):
                       'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
         }
         url = host + '/pretrainNER/snips'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_roberta(self):
@@ -66,7 +66,7 @@ class ClientTest(unittest.TestCase):
                       'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
         }
         url = host + '/pretrainNER/roberta'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_distilbert(self):
@@ -75,7 +75,7 @@ class ClientTest(unittest.TestCase):
                       'Fred went to play Soccer in the Olympic Oval yesterday and scored 4 goals in five minutes.']
         }
         url = host + '/pretrainNER/distilbert'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_zeroshot(self):
@@ -84,7 +84,7 @@ class ClientTest(unittest.TestCase):
             'labels': ['travel', 'cooking', 'dancing']
         }
         url = host + '/pretrainedclassification/zero_shot'
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_movie_sentiment(self):
@@ -92,7 +92,7 @@ class ClientTest(unittest.TestCase):
         data = {
             'texts': ['I really liked that.', 'Why was it so boring.']
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_fin_sentiment(self):
@@ -100,7 +100,7 @@ class ClientTest(unittest.TestCase):
         data = {
             'texts': ['Stocks rallied and the British pound gained.']
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_weaksupervision_hmm(self):
@@ -115,7 +115,7 @@ class ClientTest(unittest.TestCase):
                     }
                 ]
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_weaksupervision_majority_vote(self):
@@ -130,7 +130,7 @@ class ClientTest(unittest.TestCase):
                     }
                 ]
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_weaksupervision_fuzzycrf(self):
@@ -145,7 +145,7 @@ class ClientTest(unittest.TestCase):
                     }
                 ]
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_weaksupervision_dws(self):
@@ -160,7 +160,7 @@ class ClientTest(unittest.TestCase):
                     }
                 ]
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
     def test_relation_extract(self):
@@ -168,7 +168,7 @@ class ClientTest(unittest.TestCase):
         data = {
             'texts': 'Playoff hockey is the hardest sport to watch. Especially, when the Vancouver Canucks are playing against the Boston Bruins.'
         }
-        result = call_api(url, data)
+        result = call_api(url, {'data': data})
         print(result)
 
 

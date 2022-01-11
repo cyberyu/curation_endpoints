@@ -38,7 +38,7 @@ class Model:
         self.flair_model = SequenceTagger.load("flair/ner-english-ontonotes-fast")
         self.spacy_model = spacy.load('en_core_web_sm', exclude=['ner'])
         self.spacy_model_all = spacy.load('en_core_web_md')
-        self.spacy_model_trf = spacy.load('en_core_web_trf')
+        # self.spacy_model_trf = spacy.load('en_core_web_trf')
         self.snips_parser = snips_nlu_parsers.BuiltinEntityParser.build(language="en")
 
         f_prefix = ''
@@ -88,7 +88,7 @@ class Pretrained_Classification_Zero_Shot(Resource):
 
     def post(self):
         data = request.get_json()
-        text = data['texts']
+        text = data['data']['texts']
         labels = data['labels']
         # text, labels = parse_texts_and_zeroshotlabels()
 
@@ -105,7 +105,7 @@ class Pretrained_Classification_Zero_Shot(Resource):
         for el in output:
             out.append({label_mapping[lab]: el['scores'][i] for i, lab in enumerate(el['labels'])})
 
-        return out
+        return {'result': out}
 
 
 class Pretrained_Classification_Movie_Sentiment(Resource):
@@ -116,7 +116,7 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
+        texts = data['data']['texts']
         # parser = reqparse.RequestParser()
         # parser.add_argument('texts', type=str, required=True)
         # args = parser.parse_args()
@@ -134,7 +134,7 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
         for p in preds:
             results.append({k:p[i].item() for i,k in enumerate(self.classes)})
 
-        return results
+        return {'result': results}
 
 
 class Pretrained_Classification_Fin_Sentiment(Resource):
@@ -145,7 +145,7 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
+        texts = data['data']['texts']
         # parser = reqparse.RequestParser()
         # parser.add_argument('texts', type=str, required=True)
         # args = parser.parse_args()
@@ -166,7 +166,7 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
         for p in preds:
             results.append({k:p[i].item() for i, k in enumerate(self.classes)})
 
-        return results
+        return {'result': results}
 
 
 class WeakSupervision_HMM(Resource):
@@ -175,7 +175,7 @@ class WeakSupervision_HMM(Resource):
         LABELS = ['MISC', 'PER', 'LOC', 'ORG']
 
         data = request.get_json()
-        text = data['texts']
+        text = data['data']['texts']
         weak_labels = data['weak_labels']
         # text, weak_labels = parse_texts_and_labels()
 
@@ -188,7 +188,7 @@ class WeakSupervision_HMM(Resource):
 
         # now turn back into dicts to return with list preds per doc
         preds_list = extract_preds(docs, 'hmm')
-        return preds_list
+        return {'result': preds_list}
 
 
 def parse_texts_and_zeroshotlabels():
@@ -203,7 +203,7 @@ def parse_texts_and_zeroshotlabels():
 
 def parse_texts_and_labels():
     data = request.get_json()
-    text = data['texts']
+    text = data['data']['texts']
     weak_labels = data['weak_labels']
     # parser = reqparse.RequestParser()
     # parser.add_argument('texts', type=str, required=True)
@@ -212,6 +212,7 @@ def parse_texts_and_labels():
     # text = ast.literal_eval(args['texts'])
     # weak_labels = ast.literal_eval(args['weak_labels'])
     return text, weak_labels
+
 
 class WeakSupervision_MajorityVote(Resource):
     def __init__(self):
@@ -232,7 +233,7 @@ class WeakSupervision_MajorityVote(Resource):
         maj_voter = aggregation.MajorityVoterRev("majority_voter", list(unique_labs - set(['ENT'])))
         docs = list(maj_voter.pipe(docs)) #.fit_and_aggregate(docs)
         preds_list = extract_preds(docs, 'majority_voter')
-        return preds_list
+        return {'result': preds_list}
 
 
 class WeakSupervision_fuzzycrf(Resource):
@@ -243,7 +244,8 @@ class WeakSupervision_fuzzycrf(Resource):
     def post(self):
         text, weak_labels = parse_texts_and_labels()
         span_preds = [[None]*len(weak_labels)]
-        return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
+        result = get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
+        return {'result': result}
 
 
 class WeakSupervision_dws(Resource):
@@ -254,7 +256,8 @@ class WeakSupervision_dws(Resource):
     def post(self):
         text, weak_labels = parse_texts_and_labels()
         span_preds = [[None]*len(weak_labels)]
-        return get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
+        result = get_model_preds(text, weak_labels, self.model, self.nlp, span_preds=span_preds)
+        return {'result': result}
 
 
 class PretrainFinBert_HMM(Resource):
@@ -263,8 +266,8 @@ class PretrainFinBert_HMM(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
-        return get_spacy_preds(texts, self.model)
+        texts = data['data']['texts']
+        return {'result': get_spacy_preds(texts, self.model)}
 
 
 class PretrainNER_en_core_web_md(Resource):
@@ -273,8 +276,8 @@ class PretrainNER_en_core_web_md(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
-        return get_spacy_preds(texts, self.model)
+        texts = data['data']['texts']
+        return {'result': get_spacy_preds(texts, self.model)}
 
 
 class PretrainNER_en_core_web_trf(Resource):
@@ -284,7 +287,7 @@ class PretrainNER_en_core_web_trf(Resource):
     def post(self):
         data = request.get_json()
         texts = data['texts']
-        return get_spacy_preds(texts, self.model)
+        return {'result': get_spacy_preds(texts, self.model)}
 
 
 class PretrainNER_roberta(Resource):
@@ -298,8 +301,9 @@ class PretrainNER_roberta(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
-        return get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
+        texts = data['data']['texts']
+        res = get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
+        return {'result': res}
 
 
 class PretrainNER_distilbert(Resource):
@@ -313,8 +317,9 @@ class PretrainNER_distilbert(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
-        return get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
+        texts = data['data']['texts']
+        res = get_bert_preds(texts, self.tokenizer, self.model, self.nlp, self.device)
+        return {'result': res}
 
 
 class PretrainNER_FLAIR(Resource):
@@ -327,7 +332,7 @@ class PretrainNER_FLAIR(Resource):
 
     def post(self):
         args = request.get_json()
-        texts = args['texts']
+        texts = args['data']['texts']
 
         preds_list = []
         for text in texts:
@@ -366,7 +371,7 @@ class PretrainNER_FLAIR(Resource):
 
             preds_list.append(new_ents)
 
-        return preds_list
+        return {'result': preds_list}
 
 
 class PretrainNER_SNIPS(Resource):
@@ -378,8 +383,7 @@ class PretrainNER_SNIPS(Resource):
         Output: list of lists of character spans along with label for each text predictions
         """
         data = request.get_json()
-        texts = data['texts']
-        print(texts)
+        texts = data['data']['texts']
 
         preds_list = []
         for text in texts:
@@ -428,7 +432,7 @@ class PretrainNER_SNIPS(Resource):
 
             preds_list.append(spans)
 
-        return preds_list
+        return {'result': preds_list}
 
 
 class RelationExtractor(Resource):
@@ -437,7 +441,7 @@ class RelationExtractor(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['texts']
+        texts = data['data']['texts']
 
         res = self.extractor.get_facts(texts)
         results = []
@@ -452,11 +456,11 @@ class RelationExtractor(Resource):
                 relation['tail_type'] = e['t_type']
                 results.append(relation)
 
-        return results
+        return {'result': results}
 
 api.add_resource(PretrainNER_FLAIR, '/pretrainNER/flair')
 api.add_resource(PretrainFinBert_HMM, '/pretrainNER/finbert_hmm')
-api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
+# api.add_resource(PretrainNER_en_core_web_trf, '/pretrainNER/en_core_web_trf')
 api.add_resource(PretrainNER_en_core_web_md, '/pretrainNER/en_core_web_md')
 api.add_resource(PretrainNER_SNIPS, '/pretrainNER/snips')
 api.add_resource(PretrainNER_roberta, '/pretrainNER/roberta')
@@ -469,7 +473,7 @@ api.add_resource(WeakSupervision_MajorityVote, '/weaksupervision/maj_vote')
 
 api.add_resource(Pretrained_Classification_Fin_Sentiment, '/pretrainedclassification/fin_sentiment')
 api.add_resource(Pretrained_Classification_Movie_Sentiment, '/pretrainedclassification/movie_sentiment')
-api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
+# api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification/zero_shot')
 
 api.add_resource(RelationExtractor, '/relation')
 

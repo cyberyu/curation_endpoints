@@ -87,8 +87,11 @@ class Pretrained_Classification_Zero_Shot(Resource):
 
     def post(self):
         data = request.get_json()
-        text = data['data']['texts']
-        labels = data['data']['labels']
+        sentences = data['data']['texts']
+        texts = [sent['text'] for sent in sentences]
+        print(texts)
+        # labels = data['data']['labels']
+        labels = ['travel', 'computer', 'finance', 'tool']
         # text, labels = parse_texts_and_zeroshotlabels()
 
         label_names_to_use = [x.replace('_', ' ') for x in labels]
@@ -97,14 +100,18 @@ class Pretrained_Classification_Zero_Shot(Resource):
 #         label_names_to_use = [x.replace('_', ' ') for x in label_names]
 #         label_mapping = {k:v for k,v in zip(label_names_to_use, label_names)}
         #output = classifier(sentences, label_names_to_use) #candidate_labels)
-        output = self.classifier(text, labels) #candidate_labels)
+        output = self.classifier(texts, labels) #candidate_labels)
         print(output)
         # convert to list of dictionaries of label_names to
-        out = []
+        results = []
         for el in output:
-            out.append({label_mapping[lab]: el['scores'][i] for i, lab in enumerate(el['labels'])})
+            results.append({label_mapping[lab]: el['scores'][i] for i, lab in enumerate(el['labels'])})
 
-        return {'result': [out]}
+        for i, sent in enumerate(sentences):
+            sent['label'] = max(results[i], key=results[i].get)
+            sent['category'] = 'intent'  # todo: hard coded
+
+        return {'result': [sentences]}
 
 
 class Pretrained_Classification_Movie_Sentiment(Resource):
@@ -115,15 +122,8 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['data']['texts']
-        print('texts are', texts)
-        # parser = reqparse.RequestParser()
-        # parser.add_argument('texts', type=str, required=True)
-        # args = parser.parse_args()
-        # texts = args['texts']
-        #
-        # if type(args['texts']) is not list:
-        #     texts = args['texts'].split(",")
+        sentences = data['data']['texts']
+        texts = [sent['text'] for sent in sentences]
 
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
         with torch.no_grad():
@@ -134,7 +134,11 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
         for p in preds:
             results.append({k: p[i].item() for i,k in enumerate(self.classes)})
 
-        return {'result': [results]}
+        for i, sent in enumerate(sentences):
+            sent['label'] = max(results[i], key=results[i].get)
+            sent['category'] = 'sentiment' # todo: hard coded
+
+        return {'result': [sentences]}
 
 
 class Pretrained_Classification_Fin_Sentiment(Resource):
@@ -145,16 +149,9 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
 
     def post(self):
         data = request.get_json()
-        texts = data['data']['texts']
-        # parser = reqparse.RequestParser()
-        # parser.add_argument('texts', type=str, required=True)
-        # args = parser.parse_args()
-        # texts = args['texts']
-        #
-        # if type(args['texts']) is not list:
-        #     texts = args['texts'].split(",")
+        sentences = data['data']['texts']
+        texts = [sent['text'] for sent in sentences]
 
-        print("texts is ", texts)
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
         with torch.no_grad():
             print(torch.tensor(out['input_ids']))
@@ -166,7 +163,11 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
         for p in preds:
             results.append({k:p[i].item() for i, k in enumerate(self.classes)})
 
-        return {'result': [results]}
+        for i, sent in enumerate(sentences):
+            sent['label'] = max(results[i], key=results[i].get)
+            sent['category'] = 'sentiment'  # todo: hard coded
+
+        return {'result': [sentences]}
 
 
 class WeakSupervision_HMM(Resource):
@@ -455,4 +456,4 @@ api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification
 # api.add_resource(RelationExtractor, '/relation')
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)

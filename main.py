@@ -104,7 +104,7 @@ class Pretrained_Classification_Zero_Shot(Resource):
         for el in output:
             out.append({label_mapping[lab]: el['scores'][i] for i, lab in enumerate(el['labels'])})
 
-        return {'result': out}
+        return {'result': [out]}
 
 
 class Pretrained_Classification_Movie_Sentiment(Resource):
@@ -116,6 +116,7 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
     def post(self):
         data = request.get_json()
         texts = data['data']['texts']
+        print('texts are', texts)
         # parser = reqparse.RequestParser()
         # parser.add_argument('texts', type=str, required=True)
         # args = parser.parse_args()
@@ -131,9 +132,9 @@ class Pretrained_Classification_Movie_Sentiment(Resource):
 
         results = []
         for p in preds:
-            results.append({k:p[i].item() for i,k in enumerate(self.classes)})
+            results.append({k: p[i].item() for i,k in enumerate(self.classes)})
 
-        return {'result': results}
+        return {'result': [results]}
 
 
 class Pretrained_Classification_Fin_Sentiment(Resource):
@@ -153,7 +154,7 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
         # if type(args['texts']) is not list:
         #     texts = args['texts'].split(",")
 
-        print("texts is " + str(texts))
+        print("texts is ", texts)
         out = self.tokenizer(texts, padding=True, truncation=True, max_length=128)
         with torch.no_grad():
             print(torch.tensor(out['input_ids']))
@@ -165,7 +166,7 @@ class Pretrained_Classification_Fin_Sentiment(Resource):
         for p in preds:
             results.append({k:p[i].item() for i, k in enumerate(self.classes)})
 
-        return {'result': results}
+        return {'result': [results]}
 
 
 class WeakSupervision_HMM(Resource):

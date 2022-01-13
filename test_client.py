@@ -88,6 +88,7 @@ class ClientTest(unittest.TestCase):
         print(result)
 
     def test_movie_sentiment(self):
+        print('movie sentiment')
         url = host + '/pretrainedclassification/movie_sentiment'
         data = {
             'texts': ['I really liked that.', 'Why was it so boring.']

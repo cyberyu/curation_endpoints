@@ -165,7 +165,7 @@ class OpenRE_get_facts:
         # return triplet_dict
         # return modified_output
 
-    def get_facts(self, input_text, model_type='bert', use_filter=False, tree_weight=0.0, debug=False, filter=False):
+    def get_facts(self, input_text, model_type='bert', use_filter=True, tree_weight=0.0, debug=False, filter=False):
         """
         function to make call depending on the arguments in info
         """

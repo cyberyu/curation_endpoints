@@ -13,8 +13,8 @@ class RelationExtractor(Resource):
 
     def post(self):
         data = request.get_json()
-        print('data is '+str(data))
-        texts = data['data']
+        texts = data['data']['texts']
+        print(texts)
 
         res = self.extractor.get_facts(texts)
         print('***************** res is ' + str(res))

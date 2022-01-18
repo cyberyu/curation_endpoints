@@ -24,7 +24,7 @@ import requests
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
-#from IPython import embed
+from IPython import embed
 
 
 class OpenRE_get_facts:
@@ -228,13 +228,13 @@ class OpenRE_get_facts:
                         conf = triplet['c']
                         head_type = triplet['h_type']
                         tail_type = triplet['t_type']
-                        
+
                         if debug: print(f'conf: {conf}, threshold: {self.threshold}')
                         if conf < self.threshold:
                             continue
                         if debug: print('Calling Map...')
                         mapped_triplet = Map(head, relations, tail, debug=True)
-                        
+
                         mapped_triplet['h_tpos']=triplet['h_tpos']
                         mapped_triplet['t_tpos']=triplet['t_tpos']
                         mapped_triplet['r_tpos']=triplet['r_tpos']

@@ -438,6 +438,13 @@ def create_mapping(sentence, return_pt=False, nlp = None, tokenizer=None, debug=
 
     tokens = list(doc)
 
+    #Shi Yu edited 2022-01-16  --start
+    spanlist=[]
+
+    for token in doc:
+        spanlist.append([token.text, token.idx, token.idx+len(token.text)-1])
+    #Shi Yu edited 2022-01-16 --end
+
     # chunk2id = {}
 
     ent2type = dict()
@@ -514,11 +521,24 @@ def create_mapping(sentence, return_pt=False, nlp = None, tokenizer=None, debug=
     token2id = {}  # given a noun chunk, get the index in the compressed sentence
     mode = 0 # 1 in chunk, 0 not in chunk
     chunk_id = 0
+
+    charidx={} # Shi Yu added 2022-01-16
     for idx, token in enumerate(doc):
         if idx in start_chunk:
             mode = 1
             sentence_mapping.append(noun_chunks[chunk_id])
             token2id[sentence_mapping[-1]] = len(token2id)
+
+            #Shi Yu edited 2022-01-16 --edit start
+            if noun_chunks[chunk_id] in charidx.keys():
+                vof=charidx[noun_chunks[chunk_id]]
+                vof.append([spanlist[idx][1], spanlist[idx][1]+len(noun_chunks[chunk_id])-1])
+                charidx[noun_chunks[chunk_id]]=vof
+            else:
+                charidx[noun_chunks[chunk_id]]=[[spanlist[idx][1],spanlist[idx][1]+len(noun_chunks[chunk_id])-1]]
+
+            #Shi Yu edited 2022-01-16 --edit end
+
             chunk_id += 1
         elif idx in end_chunk:
             mode = 0
@@ -526,9 +546,19 @@ def create_mapping(sentence, return_pt=False, nlp = None, tokenizer=None, debug=
         if mode == 0:
             sentence_mapping.append(token.text)
             token2id[sentence_mapping[-1]] = len(token2id)
+
+            #Shi Yu edited 2022-01-16 --edit start
+            if token.text in charidx.keys():
+                vof = charidx[token.text]
+                vof.append([spanlist[idx][1], spanlist[idx][1]+len(token.text)-1])
+                charidx[token.text]=vof
+            else:
+                charidx[token.text]=[[spanlist[idx][1],spanlist[idx][2]]]
+            #Shi Yu edited 2022-01-16 --edit end
+
     if debug: print('sentence mapping:', sentence_mapping)
 
-    # sb: create chunks of text
+    # sb: cr::eate chunks of text
     ents_posn = [(e.start, e.end) for e in doc.ents]
     curr_ent = 0
     text2posn = dict()
@@ -563,6 +593,29 @@ def create_mapping(sentence, return_pt=False, nlp = None, tokenizer=None, debug=
     tokenid2word_mapping = []
     token2subtoken_ids = list()
 
+    # Shi Yu 2022-01-16 --edit start
+    posn2idx={}
+
+    for k,v in idx2posn.items():
+        if v in posn2idx.keys():
+            tof=posn2idx[v]
+            tof.append(k)
+            posn2idx[v]=tof
+        else:
+            posn2idx[v]=[k]
+
+    chunk2pos={}
+
+    for i in range(0, len(sentence_mapping)):
+        if sentence_mapping[i] in chunk2pos.keys():
+            tof=chunk2pos[sentence_mapping[i]]
+            tof.append(posn2idx[i])
+            chunk2pos[sentence_mapping[i]]=tof
+        else:
+            chunk2pos[sentence_mapping[i]]=[posn2idx[i]]
+    # Shi Yu 2022-01-16  --edit end
+
+
     for token in sentence_mapping:
         subtoken_ids = tokenizer(str(token), add_special_tokens=False)['input_ids']
         tokenid2word_mapping += [ token2id[token] ]*len(subtoken_ids)
@@ -591,7 +644,9 @@ def create_mapping(sentence, return_pt=False, nlp = None, tokenizer=None, debug=
         for key, value in outputs.items():
             outputs[key] = torch.from_numpy(np.array(value)).long().unsqueeze(0)
 
-    return outputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type
+
+    # Shi Yu 2022-01-16 change
+    return outputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type, idx2posn, posn2text, chunk2pos, charidx
 
 def compress_attention(attention, tokenid2word_mapping, operator=np.mean):
 
@@ -683,7 +738,7 @@ if __name__ == '__main__':
 
     sentence = 'Rolling Stone wrote: “No other pop song has so thoroughly challenged artistic conventions”'
     sentence = 'Dylan sing "Time They Are Changing"'
-    inputs, tokenid2word_mapping, token2id, noun_chunks  = create_mapping(sentence, return_pt=True, nlp=nlp, tokenizer=tokenizer)
+    inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type, idx2posn, posn2text, chunk2pos, charidx  = create_mapping(sentence, return_pt=True, nlp=nlp, tokenizer=tokenizer)
 
     outputs = encoder(**inputs, output_attentions=True)
     print(noun_chunks, tokenid2word_mapping, token2id)

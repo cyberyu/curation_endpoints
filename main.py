@@ -456,4 +456,4 @@ api.add_resource(Pretrained_Classification_Zero_Shot, '/pretrainedclassification
 # api.add_resource(RelationExtractor, '/relation')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

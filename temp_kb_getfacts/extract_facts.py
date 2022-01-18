@@ -24,7 +24,7 @@ import requests
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
-from IPython import embed
+#from IPython import embed
 
 
 class OpenRE_get_facts:
@@ -133,7 +133,13 @@ class OpenRE_get_facts:
                         'r': tri['r'],
                         't': tri['t'],
                         'h_type': tri['h_type'],
-                        't_type': tri['t_type']
+                        't_type': tri['t_type'],
+                        'h_tpos': tri['h_tpos'],
+                        't_tpos': tri['t_tpos'],
+                        'r_tpos': tri['r_tpos'],
+                        'h_pos': tri['h_pos'],
+                        't_pos': tri['t_pos'],
+                        'r_pos': tri['r_pos']
                     }
                 else:
                     print('rejected')
@@ -222,16 +228,28 @@ class OpenRE_get_facts:
                         conf = triplet['c']
                         head_type = triplet['h_type']
                         tail_type = triplet['t_type']
+                        
                         if debug: print(f'conf: {conf}, threshold: {self.threshold}')
                         if conf < self.threshold:
                             continue
                         if debug: print('Calling Map...')
                         mapped_triplet = Map(head, relations, tail, debug=True)
+                        
+                        mapped_triplet['h_tpos']=triplet['h_tpos']
+                        mapped_triplet['t_tpos']=triplet['t_tpos']
+                        mapped_triplet['r_tpos']=triplet['r_tpos']
+                        mapped_triplet['h_pos']=triplet['h_pos']
+                        mapped_triplet['t_pos']=triplet['t_pos']
+                        mapped_triplet['r_pos']=triplet['r_pos']
+
                         if 'h' in mapped_triplet:
                             mapped_triplet['c'] = conf
                             mapped_triplet['h_type'] = head_type
                             mapped_triplet['t_type'] = tail_type
                             mapped_triplets.append(mapped_triplet)
+
+
+
                     if debug: print('mapped triplets:', mapped_triplets)
                     output = {'line': idx, 'tri': deduplication(mapped_triplets)}
                     #                 print(f'output for line {idx}:', output)

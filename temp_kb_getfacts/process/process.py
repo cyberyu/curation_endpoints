@@ -218,6 +218,64 @@ def add_ent_types(triplets, ent2type):
     return new_triplets
 
 
+# SHi Yu 2022-01-16 ---------------edit start
+def add_token_index(triplets, chunk2pos, charidx, r_lemma_lookup):
+
+    new_triplets=list()
+
+    for trip in triplets:
+
+        htpos=chunk2pos[trip['h']]
+        ttpos=chunk2pos[trip['t']]
+
+        r_original=r_lemma_lookup[trip['r'][0]]
+
+        if len(r_original)>1:
+            r_original=r_original[0]
+        else:
+            r_original=r_original[0]
+
+        rtpos = chunk2pos[r_original]
+
+
+        hpos = charidx[trip['h']]
+        tpos = charidx[trip['t']]
+        rpos = charidx[r_original]
+        
+        mindistance=1000
+        for i in htpos:
+            for j in ttpos:
+                for k in rtpos:
+                    if max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])<mindistance:
+                        bestcomb_tpos = [i,j,k]
+                        mindistance = max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])
+                        
+        mindistance=1000
+        for i in hpos:
+            for j in tpos:
+                for k in rpos:
+                    if max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])<mindistance:
+                        bestcomb_pos = [i,j,k]
+                        mindistance = max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])
+        
+        trip['h_tpos']=[bestcomb_tpos[0][0],bestcomb_tpos[0][-1]]
+        trip['t_tpos']=[bestcomb_tpos[1][0],bestcomb_tpos[1][-1]]
+        trip['r_tpos']=[bestcomb_tpos[2][0],bestcomb_tpos[2][-1]]
+        
+        trip['h_pos']=[bestcomb_pos[0][0],bestcomb_pos[0][-1]]
+        trip['t_pos']=[bestcomb_pos[1][0],bestcomb_pos[1][-1]]
+        trip['r_pos']=[bestcomb_pos[2][0],bestcomb_pos[2][-1]]
+
+        
+        print('bestcomb_tpos ' + str(bestcomb_tpos) )
+        print('bestcomb_pos ' + str(bestcomb_pos) )
+
+
+        new_triplets.append(trip)
+
+    return triplets
+#Shi Yu 2022-01-16 ------------edit end
+
 def expand_matrix(mat, token2subtoken_ids):
     """
     expand the input matrix, dependency matrix, to account for subtoken usage
@@ -248,13 +306,17 @@ def expand_matrix(mat, token2subtoken_ids):
 
 
 
-def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=False, tree_weight=0.0, debug=False):
+def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=True, tree_weight=0.0, debug=False):
     '''Implement the match part of MAMA
 
     '''
     tokenizer_name = str(tokenizer.__str__)
 
-    inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type = create_mapping(sentence, return_pt=True, nlp=nlp, tokenizer=tokenizer, debug=debug)
+    #inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type 
+    # Shi Yu  2022-01-16  --edit start
+    inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type, idx2posn, posn2text, chunk2pos, charidx= create_mapping(sentence, return_pt=True, nlp=nlp, tokenizer=tokenizer, debug=debug)
+    # Shi Yu  2022-01-16  --edit end
+
 
     # inputs are the tokenIds
     if debug:
@@ -279,13 +341,30 @@ def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=
         entity_filter = entity_filter.union(set(ent.text.split(' ')))
 
     # call the matcher to find matches
-    # matches = matcher(doc)
-    # spans = [doc[start:end] for _, start, end in matches]
-    # relation_filter = set([a for s in spans for a in [e.lemma_ for e in list(s)]])
-    # if debug:
-    #     print('entity filter:', entity_filter)
-    #     print('relation filter:', relation_filter)
+    matches = matcher(doc)
+    spans = [doc[start:end] for _, start, end in matches]
+    relation_filter = set([a for s in spans for a in [e.lemma_ for e in list(s)]])
 
+    #Shi Yu 2022-01-16 --edit start
+    relation_filter_raw = set([a for s in spans for a in [e for e in list(s)]])
+    #Shi Yu 2022-01-16 --edit end
+
+    #Shi Yu 2022-01-16 --edit start
+    r_lemma_lookup={}
+    
+    for e in list(set(relation_filter_raw)):
+        if e.lemma_ in r_lemma_lookup.keys():
+            vof = r_lemma_lookup[e.lemma_]
+            vof.append(str(e))
+            r_lemma_lookup[e.lemma_]=vof
+        else:
+            r_lemma_lookup[e.lemma_]=[str(e)]
+    #Shi Yu 2022-01-16 --edit end
+
+    if debug:
+        print('entity filter:', entity_filter)
+        print('relation filter:', relation_filter)
+        #print('r_lemma_lookup:'. str(r_lemma_lookup))
 
     with torch.no_grad():
         if use_cuda:
@@ -369,6 +448,10 @@ def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=
     # append entity types to tuples
     triplet_text = add_ent_types(triplet_text, ent2type)
 
+    # Shi Yu 2022-01-16 added index
+    triplet_text = add_token_index(triplet_text, chunk2pos, charidx, r_lemma_lookup)
+
+    print('add token index ' + str(triplet_text))
     return triplet_text
 
 

@@ -23,20 +23,43 @@ class RelationExtractor(Resource):
             for e in ele['tri']:
                 relation = {}
                 relation['score'] = e['c']
-                relation['header'] = e['h']
-                relation['header_type'] = e['h_type']
-                relation['relation'] = e['r']
-                relation['tail'] = e['t']
-                relation['tail_type'] = e['t_type']
-                relation['h_tpos']=e['h_tpos']
-                relation['t_tpos']=e['t_tpos']
-                relation['r_tpos']=e['r_tpos']
-                relation['h_pos']=e['h_pos']
-                relation['t_pos']=e['t_pos']
-                relation['r_pos']=e['r_pos']
+
+                head = {}
+                head['pos'] = e['h_pos']
+                head['tpos'] = e['h_tpos']
+                head['name'] = e['h_type']
+                head['text'] = e['h']
+
+                tail = {}
+                tail['pos'] = e['h_pos']
+                tail['tpos'] = e['t_tpos']
+                tail['name'] = e['t_type']
+                tail['text'] = e['t']
+
+                hint = {}
+                hint['pos'] = e['r_pos']
+                hint['tpos'] = e['r_tpos']
+                hint['text'] = e['r']
+
+                relation['head'] = head
+                relation['tail'] = tail
+                relation['hint'] = hint
+
+                # relation['header'] = e['h']
+                # relation['header_type'] = e['h_type']
+                # relation['relation'] = e['r']
+                # relation['tail'] = e['t']
+                # relation['tail_type'] = e['t_type']
+                # relation['h_tpos'] = e['h_tpos']
+                # relation['t_tpos'] = e['t_tpos']
+                # relation['r_tpos'] = e['r_tpos']
+                # relation['h_pos'] = e['h_pos']
+                # relation['t_pos'] = e['t_pos']
+                # relation['r_pos'] = e['r_pos']
                 results.append(relation)
 
-        return {'result': results}
+        print('\n\n results are', results)
+        return {'result': [results]}
 
 
 api.add_resource(RelationExtractor, '/relation')

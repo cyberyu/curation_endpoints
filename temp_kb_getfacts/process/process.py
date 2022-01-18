@@ -7,6 +7,16 @@ from transformers import AutoTokenizer, BertModel, GPT2Model
 from constant.constant import invalid_relations_set, prepositions
 from spacy.matcher import Matcher
 # from spacy.util import filter_spans
+from collections import Counter
+import numpy as np  # sb
+
+
+pattern = [{'POS': 'VERB', 'OP': '?'},
+           {'POS': 'ADV', 'OP': '*'},
+           {'POS': 'AUX', 'OP': '*'},
+           {'POS': 'VERB', 'OP': '+'}]
+
+
 def filter_spans(spans):
     # Filter a sequence of spans so they don't contain overlaps
     # For spaCy 2.1.4+: this function is available as spacy.util.filter_spans()
@@ -21,16 +31,6 @@ def filter_spans(spans):
         seen_tokens.update(range(span.start, span.end))
     result = sorted(result, key=lambda span: span.start)
     return result
-
-from collections import Counter
-
-import numpy as np  # sb
-
-pattern = [{'POS': 'VERB', 'OP': '?'},
-           {'POS': 'ADV', 'OP': '*'},
-           {'POS': 'AUX', 'OP': '*'},
-           {'POS': 'VERB', 'OP': '+'}]
-
 # instantiate a Matcher instance
 
 
@@ -51,6 +51,7 @@ def process_matrix(attentions, layer_idx = -1, head_num = 0, avg_head=False, tri
 
     return attention_matrix
 
+
 def bfs(args):
     s, end, graph, max_size, black_list_relation = args
     # return BFS(s, end, graph, max_size, black_list_relation)
@@ -63,9 +64,11 @@ def check_relations_validity(relations):
             return False
     return True
 
+
 def global_initializer(nlp_object):
     global spacy_nlp
     spacy_nlp = nlp_object
+
 
 def filter_relation_sets(params):
     triplet, id2token, debug = params

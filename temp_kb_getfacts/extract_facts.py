@@ -271,7 +271,20 @@ class OpenRE_get_facts:
 
 if __name__ == '__main__':
     ogf = OpenRE_get_facts()
-    res = ogf.get_facts('Playoff hockey is the hardest sport to watch. Especially, when the Vancouver Canucks are playing against the Boston Bruins.')
+    txt = 'Playoff hockey is the hardest sport to watch. Especially, when the Vancouver Canucks are playing against the Boston Bruins.'
+    txt = """ 
+    I am working on appending texts in a list, and then change the texts to be word embeddings and then do machine learning. 
+    The 'insts' in 'articles' is collected by using spacy, but then I am faced with this error as follows, can someone please 
+    tell me how to fix this error? Can I change the type ''spacy.tokens.doc.Doc' into 'str'?
+    """
+    txt = """
+    U.S. inflation hit its fastest pace in nearly four decades last year as pandemic-related supply and demand imbalances, 
+    along with stimulus intended to shore up the economy, pushed prices up at a 7% annual rate. 
+    The Labor Department said Wednesday the consumer-price index—which measures what consumers pay 
+    for goods and services—rose 7% in December from the same month a year earlier, up from 6.8% in November. 
+    That was the fastest since 1982 and marked the third straight month in which inflation exceeded 6%.
+    """
+    res = ogf.get_facts(txt)
     # res contains the extract triplets of entity_relations
     print(res)
 

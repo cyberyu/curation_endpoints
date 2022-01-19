@@ -53,7 +53,10 @@ def deduplication(triplets):
     t_pos_list=[]
     r_tpos_list=[]
     r_pos_list=[]
+    
+    # Shi Yu 2022-01-18 edit start
     sent_pos_list[]
+    # Shi Yu 2022-01-18 edit end
 
     for t in triplets:
         key = '{}\t{}\t{}'.format(t['h'], t['r'], t['t'])
@@ -66,7 +69,9 @@ def deduplication(triplets):
         t_pos=t['t_pos']
         r_tpos=t['r_tpos']
         r_pos=t['r_pos']
+        # Shi Yu 2022-01-18 edit start
         sent_pos=t['sent_pos']
+        # Shi Yu 2022-01-18 edit end
 
 
 
@@ -81,7 +86,9 @@ def deduplication(triplets):
             t_pos_list.append(t_pos)
             r_tpos_list.append(r_tpos)
             r_pos_list.append(r_pos)
+            # Shi Yu 2022-01-18 edit start
             sent_pos_list.append(sent_pos)
+            # Shi Yu 2022-01-18 edit end
 
 
     unique_triplets = []

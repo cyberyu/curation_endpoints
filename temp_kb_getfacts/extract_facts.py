@@ -139,7 +139,10 @@ class OpenRE_get_facts:
                         'r_tpos': tri['r_tpos'],
                         'h_pos': tri['h_pos'],
                         't_pos': tri['t_pos'],
-                        'r_pos': tri['r_pos']
+                        'r_pos': tri['r_pos'],
+                        # Shi Yu 2022-01-18 edit start --
+                        'sent_pos': tri['sent_pos']
+                        # Shi Yu 2022-01-18 edit end --
                     }
                 else:
                     print('rejected')

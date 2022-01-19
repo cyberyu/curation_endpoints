@@ -44,6 +44,7 @@ class RelationExtractor(Resource):
                 relation['head'] = head
                 relation['tail'] = tail
                 relation['hint'] = hint
+                relation['sent_pos']=e['sent_pos']
 
                 # relation['header'] = e['h']
                 # relation['header_type'] = e['h_type']

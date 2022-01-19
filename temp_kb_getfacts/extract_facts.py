@@ -205,7 +205,12 @@ class OpenRE_get_facts:
             input_text = [input_text]
 
         input_text = [a for t in input_text for a in t.split('\n')]
-
+        
+        
+        # Shi Yu 2022-01-18 -- edit start
+        sent_count=0
+        # Shi Yu 2022-01-18 -- edit end
+        
         for idx, line in enumerate(input_text):
             sentence = line.strip()
             #         print(f'line: {sentence}')
@@ -216,7 +221,15 @@ class OpenRE_get_facts:
                     # Match
                     for triplets in parse_sentence(sent.text, self.tokenizer, self.encoder, self.nlp, use_cuda=self.use_cuda,
                                                    use_filter=use_filter, tree_weight=tree_weight, debug=debug):
+                        # Shi Yu 2022-01-18  -- edit start
+                        triplets['sent_pos']=sent_count
+                        # Shi Yu 2022-01-18 -- edit end
                         valid_triplets.append(triplets)
+                    
+                    # Shi Yu 2022-01-18  -- edit start
+                    sent_count+=1
+                    # Shi Yu 2022-01-18  -- edit end
+                    
                 if debug: print('valid triplets:', valid_triplets)
                 if len(valid_triplets) > 0:
                     # Map
@@ -241,6 +254,10 @@ class OpenRE_get_facts:
                         mapped_triplet['h_pos']=triplet['h_pos']
                         mapped_triplet['t_pos']=triplet['t_pos']
                         mapped_triplet['r_pos']=triplet['r_pos']
+                        
+                        # Shi Yu 2022-01-18  -- edit start
+                        mapped_triplet['sent_pos']=triplet['sent_pos']
+                        # Shi Yu 2022-01-18  -- edit end
 
                         if 'h' in mapped_triplet:
                             mapped_triplet['c'] = conf

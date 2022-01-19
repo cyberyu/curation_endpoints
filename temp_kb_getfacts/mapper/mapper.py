@@ -53,6 +53,7 @@ def deduplication(triplets):
     t_pos_list=[]
     r_tpos_list=[]
     r_pos_list=[]
+    sent_pos_list[]
 
     for t in triplets:
         key = '{}\t{}\t{}'.format(t['h'], t['r'], t['t'])
@@ -65,6 +66,7 @@ def deduplication(triplets):
         t_pos=t['t_pos']
         r_tpos=t['r_tpos']
         r_pos=t['r_pos']
+        sent_pos=t['sent_pos']
 
 
 
@@ -79,12 +81,13 @@ def deduplication(triplets):
             t_pos_list.append(t_pos)
             r_tpos_list.append(r_tpos)
             r_pos_list.append(r_pos)
+            sent_pos_list.append(sent_pos)
 
 
     unique_triplets = []
     for idx, unique_pair in enumerate(unique_pairs):
         h, r, t = unique_pair.split('\t')
-        unique_triplets.append({ 'h': h, 'r': r, 't': t , 'c': pair_confidence[idx], 'h_type': head_types[idx], 't_type': tail_types[idx], 'h_tpos': h_tpos_list[idx], 'h_pos': h_pos_list[idx], 't_tpos': t_tpos_list[idx], 't_pos': t_pos_list[idx], 'r_tpos': r_tpos_list[idx], 'r_pos': r_pos_list[idx]})
+        unique_triplets.append({ 'h': h, 'r': r, 't': t , 'c': pair_confidence[idx], 'h_type': head_types[idx], 't_type': tail_types[idx], 'h_tpos': h_tpos_list[idx], 'h_pos': h_pos_list[idx], 't_tpos': t_tpos_list[idx], 't_pos': t_pos_list[idx], 'r_tpos': r_tpos_list[idx], 'r_pos': r_pos_list[idx], 'sent_pos':sent_pos_list[idx]})
 
     return unique_triplets
 

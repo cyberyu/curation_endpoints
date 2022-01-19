@@ -47,15 +47,15 @@ def deduplication(triplets):
     pair_confidence = []
     head_types = []
     tail_types = []
-    h_tpos_list=[]
-    h_pos_list=[]
-    t_tpos_list=[]
-    t_pos_list=[]
-    r_tpos_list=[]
-    r_pos_list=[]
-    
+    h_tpos_list = []
+    h_pos_list = []
+    t_tpos_list = []
+    t_pos_list = []
+    r_tpos_list = []
+    r_pos_list = []
+
     # Shi Yu 2022-01-18 edit start
-    sent_pos_list[]
+    sent_pos_list = []
     # Shi Yu 2022-01-18 edit end
 
     for t in triplets:
@@ -63,17 +63,15 @@ def deduplication(triplets):
         conf = t['c']
         h_type = t['h_type']
         t_type = t['t_type']
-        h_tpos=t['h_tpos']
-        h_pos=t['h_pos']
-        t_tpos=t['t_tpos']
-        t_pos=t['t_pos']
-        r_tpos=t['r_tpos']
-        r_pos=t['r_pos']
+        h_tpos = t['h_tpos']
+        h_pos = t['h_pos']
+        t_tpos = t['t_tpos']
+        t_pos = t['t_pos']
+        r_tpos = t['r_tpos']
+        r_pos = t['r_pos']
         # Shi Yu 2022-01-18 edit start
-        sent_pos=t['sent_pos']
+        sent_pos = t['sent_pos']
         # Shi Yu 2022-01-18 edit end
-
-
 
         if key not in unique_pairs:
             unique_pairs.append(key)

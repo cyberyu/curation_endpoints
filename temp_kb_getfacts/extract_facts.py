@@ -204,105 +204,53 @@ class OpenRE_get_facts:
         if self.use_cuda:
             self.encoder = self.encoder.cuda()
 
-        if not isinstance(input_text, list):
-            input_text = [input_text]
+        for idx, sent in enumerate(self.nlp(input_text).sents):
+            if debug: print(f'sentence: {sent}')
+            # Match
+            for triplet in parse_sentence(sent.text, self.tokenizer, self.encoder, self.nlp, use_cuda=self.use_cuda,
+                                           use_filter=use_filter, tree_weight=tree_weight, debug=debug):
+                # Map
+                if debug: print('valid triplets:', triplet)
+                mapped_triplets = []
+                head = triplet['h']
+                tail = triplet['t']
+                relations = triplet['r']
+                conf = triplet['c']
+                head_type = triplet['h_type']
+                tail_type = triplet['t_type']
 
-        input_text = [a for t in input_text for a in t.split('\n')]
-        
-        
-        # Shi Yu 2022-01-18 -- edit start
-        sent_count=0
-        # Shi Yu 2022-01-18 -- edit end
-        
-        for idx, line in enumerate(input_text):
-            sentence = line.strip()
-            #         print(f'line: {sentence}')
-            if len(sentence):
-                valid_triplets = []
-                for sent in self.nlp(sentence).sents:
-                    if debug: print(f'sentence: {sent}')
-                    # Match
-                    for triplets in parse_sentence(sent.text, self.tokenizer, self.encoder, self.nlp, use_cuda=self.use_cuda,
-                                                   use_filter=use_filter, tree_weight=tree_weight, debug=debug):
-                        # Shi Yu 2022-01-18  -- edit start
-                        triplets['sent_pos']=sent_count
-                        # Shi Yu 2022-01-18 -- edit end
-                        valid_triplets.append(triplets)
-                    
-                    # Shi Yu 2022-01-18  -- edit start
-                    sent_count+=1
-                    # Shi Yu 2022-01-18  -- edit end
-                    
-                if debug: print('valid triplets:', valid_triplets)
-                if len(valid_triplets) > 0:
-                    # Map
-                    mapped_triplets = []
-                    for triplet in valid_triplets:
-                        head = triplet['h']
-                        tail = triplet['t']
-                        relations = triplet['r']
-                        conf = triplet['c']
-                        head_type = triplet['h_type']
-                        tail_type = triplet['t_type']
+                if debug: print(f'conf: {conf}, threshold: {self.threshold}')
+                if conf < self.threshold:
+                    continue
+                if debug: print('Calling Map...')
+                mapped_triplet = Map(head, relations, tail, debug=True)
 
-                        if debug: print(f'conf: {conf}, threshold: {self.threshold}')
-                        if conf < self.threshold:
-                            continue
-                        if debug: print('Calling Map...')
-                        mapped_triplet = Map(head, relations, tail, debug=True)
+                mapped_triplet['h_tpos'] = triplet['h_tpos']
+                mapped_triplet['t_tpos'] = triplet['t_tpos']
+                mapped_triplet['r_tpos'] = triplet['r_tpos']
+                mapped_triplet['h_pos'] = triplet['h_pos']
+                mapped_triplet['t_pos'] = triplet['t_pos']
+                mapped_triplet['r_pos'] = triplet['r_pos']
+                mapped_triplet['sent_pos'] = idx
 
-                        mapped_triplet['h_tpos']=triplet['h_tpos']
-                        mapped_triplet['t_tpos']=triplet['t_tpos']
-                        mapped_triplet['r_tpos']=triplet['r_tpos']
-                        mapped_triplet['h_pos']=triplet['h_pos']
-                        mapped_triplet['t_pos']=triplet['t_pos']
-                        mapped_triplet['r_pos']=triplet['r_pos']
-                        
-                        # Shi Yu 2022-01-18  -- edit start
-                        mapped_triplet['sent_pos']=triplet['sent_pos']
-                        # Shi Yu 2022-01-18  -- edit end
+                if 'h' in mapped_triplet:
+                    mapped_triplet['c'] = conf
+                    mapped_triplet['h_type'] = head_type
+                    mapped_triplet['t_type'] = tail_type
+                    mapped_triplets.append(mapped_triplet)
 
-                        if 'h' in mapped_triplet:
-                            mapped_triplet['c'] = conf
-                            mapped_triplet['h_type'] = head_type
-                            mapped_triplet['t_type'] = tail_type
-                            mapped_triplets.append(mapped_triplet)
+            if debug: print('mapped triplets:', mapped_triplets)
+            output = {'line': idx, 'tri': deduplication(mapped_triplets)}
 
-
-
-                    if debug: print('mapped triplets:', mapped_triplets)
-                    output = {'line': idx, 'tri': deduplication(mapped_triplets)}
-                    #                 print(f'output for line {idx}:', output)
-
-                    if self.include_sentence:
-                        output['sent'] = sentence
-                    if len(output['tri']) > 0:
-                        self.outputs.append(output)
-        #                     print('output:',output)
-        #                   g.write(json.dumps( output )+'\n')
+            if len(output['tri']) > 0:
+                if self.include_sentence:
+                    output['sent'] = str(sent)
+                self.outputs.append(output)
 
         # process all outputs based on an entailment model
         if filter:
             refined_output = self.analyze_results(self, text=input_text, results=self.outputs)
-
             self.outputs = refined_output
-
-        # convert all outputs to a string
-        # if debug: print('outputs:', outputs)
-        # new_outputs = list()
-        # for out in outputs:
-        #     new_tri = list()
-        #     for fact in out['tri']:
-        #         new_tri.append({'h': str(fact['h']),
-        #                        'r': str(fact['r']),
-        #                        't': str(fact['t']),
-        #                        'conf': fact['c']})
-        #     new_out = out.copy()
-        #     new_out['tri'] = new_tri
-        #     new_outputs.append(new_out)
-
-        #     return input_text
-        #     new_outputs = ['test_output1'] + new_outputs
 
         return self.outputs
 

@@ -227,6 +227,7 @@ class OpenRE_get_facts:
             #         print(f'line: {sentence}')
             if len(sentence):
                 valid_triplets = []
+                triplet_ary = []
                 for sent in self.nlp(sentence).sents:
                     if debug: print(f'sentence: {sent}')
                     # Match
@@ -238,12 +239,13 @@ class OpenRE_get_facts:
                         # Shi Yu 2022-01-18 -- edit end
                         valid_triplets.append(triplets)
 
-                    # Shi Yu 2022-01-18  -- edit start
+                    if debug: print('valid triplets:', valid_triplets)
+                    if (sent.text.startswith('\r') or sent.text.startswith('\n')) and len(valid_triplets) > 0:
+                        triplet_ary.append(valid_triplets)
+                        valid_triplets = []
                     sent_count += 1
-                    # Shi Yu 2022-01-18  -- edit end
 
-                if debug: print('valid triplets:', valid_triplets)
-                if len(valid_triplets) > 0:
+                for valid_triplets in triplet_ary:
                     # Map
                     mapped_triplets = []
                     for triplet in valid_triplets:

@@ -6,7 +6,7 @@ import torch
 from transformers import AutoTokenizer, BertModel, GPT2Model
 from constant.constant import invalid_relations_set, prepositions
 from spacy.matcher import Matcher
-from thinc.extra import load_nlp
+# from thinc.extra import load_nlp
 # from spacy.util import filter_spans
 from collections import Counter
 import numpy as np  # sb
@@ -66,10 +66,10 @@ def check_relations_validity(relations):
     return True
 
 
-def global_initializer(nlp_object, vectors):
+def global_initializer(nlp_object):
     global spacy_nlp
     spacy_nlp = nlp_object
-    load_nlp.VECTORS = vectors
+    # load_nlp.VECTORS = vectors
 
 
 def filter_relation_sets(params):
@@ -434,7 +434,7 @@ def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=
     triplet_text = []
     # with Pool(10, global_initializer, (nlp,)) as pool:
     # filter_relation_sets is where triples are lost
-    with Pool(2, global_initializer, (nlp, load_nlp.VECTORS)) as pool:  # sb: 10 -> 2 to use less memory
+    with Pool(2, global_initializer, (nlp,)) as pool:  # sb: 10 -> 2 to use less memory
         for triplet in pool.imap_unordered(filter_relation_sets, all_relation_pairs):
             if len(triplet) > 0:
                 triplet_text.append(triplet)

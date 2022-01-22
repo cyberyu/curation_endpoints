@@ -309,13 +309,15 @@ if __name__ == '__main__':
     for goods and services—rose 7% in December from the same month a year earlier, up from 6.8% in November. 
     That was the fastest since 1982 and marked the third straight month in which inflation exceeded 6%.
     """
+    txt = 'NVIDIA Shares Higher Tuesday After Company Reports Pegasus Platform For Autonomous Cars NVIDIA (NVDA) shares are higher on Tuesday morning after the company unveiled a Pegasus computing platform for autonomous cars and a partnership with logistics firms DHL and ZF to power their self-driving truck fleet starting in 2019, according to reports.\r\n\r\nInsider at Oracle Acquires Stock Via Option/Derivative Security Sells Portion to Pay Tax, Buy Trend Intact On Oct 05, 2017, Dorian Daley, EVP, Genl Counsel, Secretary, exercised.\r\n\r\noptions/derivative securities for 12,500 shares of Oracle (ORCL) and sold 6,523 shares in the company for $318,975 to meet tax obligations. After accounting for tax obligations this transaction resulted in a net acquisition of 5,977 company shares.  Subsequent to the Form 4 filing with the SEC, Daley has 36,954 shares of the company, with a market value, based on the prior-day closing price, of $1.79 million.\r\n\r\nGeneral Motors Insider Continues 90-Day Selling Trend Alicia S Boler-Davis, EVP, reported a sale of 10,000 shares in General Motors (GM) on Oct 06, 2017, for $450,000.  Following the Form 4 filing with the SEC, Boler-Davis has 33,912 shares of the company, which have a market value of $1.54 million as of the prior-day closing price.'
+
     res = ogf.get_facts(txt)
     # res contains the extract triplets of entity_relations
     print(res)
 
     # expand and extract them one by one
     #for ele in res.json()['result']:
-    for ele in res:
-        for e in ele['tri']:
-            print('An extracted triplet has c_score {}, header_entity {}, header_type {}, relation {}. tail_entity {}, tail_type {}'.format(
-                e['c'], e['h'], e['h_type'], e['r'], e['t'], e['t_type']))
+    # for ele in res:
+    #     for e in ele['tri']:
+    #         print('An extracted triplet has c_score {}, header_entity {}, header_type {}, relation {}. tail_entity {}, tail_type {}'.format(
+    #             e['c'], e['h'], e['h_type'], e['r'], e['t'], e['t_type']))

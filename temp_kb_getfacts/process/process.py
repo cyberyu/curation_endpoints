@@ -6,6 +6,7 @@ import torch
 from transformers import AutoTokenizer, BertModel, GPT2Model
 from constant.constant import invalid_relations_set, prepositions
 from spacy.matcher import Matcher
+from thinc.extra import load_nlp
 # from spacy.util import filter_spans
 from collections import Counter
 import numpy as np  # sb
@@ -65,9 +66,10 @@ def check_relations_validity(relations):
     return True
 
 
-def global_initializer(nlp_object):
+def global_initializer(nlp_object, vectors):
     global spacy_nlp
     spacy_nlp = nlp_object
+    load_nlp.VECTORS = vectors
 
 
 def filter_relation_sets(params):
@@ -244,7 +246,7 @@ def add_token_index(triplets, chunk2pos, charidx, r_lemma_lookup):
         hpos = charidx[trip['h']]
         tpos = charidx[trip['t']]
         rpos = charidx[r_original]
-        
+
         mindistance=1000
         for i in htpos:
             for j in ttpos:
@@ -252,7 +254,7 @@ def add_token_index(triplets, chunk2pos, charidx, r_lemma_lookup):
                     if max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])<mindistance:
                         bestcomb_tpos = [i,j,k]
                         mindistance = max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])
-                        
+
         mindistance=1000
         for i in hpos:
             for j in tpos:
@@ -260,16 +262,16 @@ def add_token_index(triplets, chunk2pos, charidx, r_lemma_lookup):
                     if max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])<mindistance:
                         bestcomb_pos = [i,j,k]
                         mindistance = max(i[-1],j[-1],k[-1])-min(i[0],j[0],k[0])
-        
+
         trip['h_tpos']=[bestcomb_tpos[0][0],bestcomb_tpos[0][-1]]
         trip['t_tpos']=[bestcomb_tpos[1][0],bestcomb_tpos[1][-1]]
         trip['r_tpos']=[bestcomb_tpos[2][0],bestcomb_tpos[2][-1]]
-        
+
         trip['h_pos']=[bestcomb_pos[0][0],bestcomb_pos[0][-1]]
         trip['t_pos']=[bestcomb_pos[1][0],bestcomb_pos[1][-1]]
         trip['r_pos']=[bestcomb_pos[2][0],bestcomb_pos[2][-1]]
 
-        
+
         print('bestcomb_tpos ' + str(bestcomb_tpos) )
         print('bestcomb_pos ' + str(bestcomb_pos) )
 
@@ -315,7 +317,7 @@ def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=
     '''
     tokenizer_name = str(tokenizer.__str__)
 
-    #inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type 
+    #inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type
     # Shi Yu  2022-01-16  --edit start
     inputs, tokenid2word_mapping, token2id, noun_chunks, token2subtoken_ids, ent2type, idx2posn, posn2text, chunk2pos, charidx= create_mapping(sentence, return_pt=True, nlp=nlp, tokenizer=tokenizer, debug=debug)
     # Shi Yu  2022-01-16  --edit end
@@ -354,7 +356,7 @@ def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=
 
     #Shi Yu 2022-01-16 --edit start
     r_lemma_lookup={}
-    
+
     for e in list(set(relation_filter_raw)):
         if e.lemma_ in r_lemma_lookup.keys():
             vof = r_lemma_lookup[e.lemma_]
@@ -432,7 +434,7 @@ def parse_sentence(sentence, tokenizer, encoder, nlp, use_cuda=True, use_filter=
     triplet_text = []
     # with Pool(10, global_initializer, (nlp,)) as pool:
     # filter_relation_sets is where triples are lost
-    with Pool(2, global_initializer, (nlp,)) as pool:  # sb: 10 -> 2 to use less memory
+    with Pool(2, global_initializer, (nlp, load_nlp.VECTORS)) as pool:  # sb: 10 -> 2 to use less memory
         for triplet in pool.imap_unordered(filter_relation_sets, all_relation_pairs):
             if len(triplet) > 0:
                 triplet_text.append(triplet)

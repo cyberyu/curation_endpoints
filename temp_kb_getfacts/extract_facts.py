@@ -24,12 +24,21 @@ import requests
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
+from spacy.symbols import ORTH
 from IPython import embed
+
+
+def set_custom_sentence_end_points(doc):
+    for token in doc[:-1]:
+        if token.text == "\n":
+            doc[token.i + 1].is_sent_start = True
+    return doc
 
 
 class OpenRE_get_facts:
     def __init__(self):
         self.nlp = en_core_web_md.load()
+        self.nlp.add_pipe(set_custom_sentence_end_points, before='parser')
 
         self.model_dict = {
             'bert': BertModel.from_pretrained('bert-large-cased'),
@@ -210,7 +219,9 @@ class OpenRE_get_facts:
             for triplet in parse_sentence(sent.text, self.tokenizer, self.encoder, self.nlp, use_cuda=self.use_cuda,
                                            use_filter=use_filter, tree_weight=tree_weight, debug=debug):
                 # Map
-                if debug: print('valid triplets:', triplet)
+                if debug:
+                    print('valid triplets:', triplet)
+                    print('\n')
                 mapped_triplets = []
                 head = triplet['h']
                 tail = triplet['t']

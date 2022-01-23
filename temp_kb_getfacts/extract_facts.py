@@ -220,7 +220,7 @@ class OpenRE_get_facts:
         if len(input_text):
             valid_triplets = []
             triplet_ary = []
-            for idx, sent in enumerate(self.nlp(input_text).sents):
+            for sent_count, sent in enumerate(self.nlp(input_text).sents):
                 if debug: print(f'sentence: {sent}')
                 # Match
                 for triplets in parse_sentence(sent.text, self.tokenizer, self.encoder, self.nlp,
@@ -235,7 +235,6 @@ class OpenRE_get_facts:
                 if (sent.text.startswith('\r') or sent.text.startswith('\n')) and len(valid_triplets) > 0:
                     triplet_ary.append(valid_triplets)
                     valid_triplets = []
-                sent_count = idx
 
             for valid_triplets in triplet_ary:
                 # Map
@@ -268,9 +267,9 @@ class OpenRE_get_facts:
                         mapped_triplet['t_type'] = tail_type
                         mapped_triplets.append(mapped_triplet)
 
-                if debug: print('mapped triplets:', mapped_triplets)
-                output = {'line': idx, 'tri': deduplication(mapped_triplets)}
-                #                 print(f'output for line {idx}:', output)
+                if debug:
+                    print('mapped triplets:', mapped_triplets)
+                output = {'line': sent_count, 'tri': deduplication(mapped_triplets)}
 
                 if len(output['tri']) > 0:
                     self.outputs.append(output)

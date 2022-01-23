@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, BertModel, GPT2Model, AutoModel, RobertaTokenizer, RobertaModel
 import sys, os
 from os import path
+from spacy.language import Language
 import time
 # eng_adj_path = path.join(path.dirname(__file__), 'english-adjectives.txt')
 level_up = path.join(path.dirname(__file__), '../')
@@ -24,21 +25,24 @@ import requests
 import torch
 import torch.nn.functional as F
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
+import spacy
 from spacy.symbols import ORTH
 from IPython import embed
 
 
+@Language.component('sent')
 def set_custom_sentence_end_points(doc):
     for token in doc[:-1]:
-        if token.text == "\n":
+        if token.text.startswith('\n') or token.text.startswith('\r'):
             doc[token.i + 1].is_sent_start = True
     return doc
 
 
 class OpenRE_get_facts:
     def __init__(self):
-        self.nlp = en_core_web_md.load()
-        # self.nlp.add_pipe(set_custom_sentence_end_points, before='parser')
+        self.nlp = spacy.load('en_core_web_md')
+        # Language.factory('sent_breaker', func=set_custom_sentence_end_points)
+        self.nlp.add_pipe('sent', before='parser')
 
         self.model_dict = {
             'bert': BertModel.from_pretrained('bert-large-cased'),

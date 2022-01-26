@@ -336,7 +336,6 @@ class PretrainNER_FLAIR(Resource):
         texts = args['data']['texts']
 
         preds_list = []
-        print('text flair', texts)
 
         doc = self.spacy_model(texts)
         sents = [[s_.text for s_ in s] for s in doc.sents]

@@ -336,40 +336,40 @@ class PretrainNER_FLAIR(Resource):
         texts = args['data']['texts']
 
         preds_list = []
-        for text in texts:
-            doc = self.spacy_model(text)
-            sents = [[s_.text for s_ in s] for s in doc.sents]
-            sentences = [Sentence(s) for s in sents]
+        print('text flair', texts)
 
-            # predict tags for sentences
-            self.flair_model.predict(sentences)
+        doc = self.spacy_model(texts)
+        sents = [[s_.text for s_ in s] for s in doc.sents]
+        sentences = [Sentence(s) for s in sents]
 
-            # print('DOc texT: ', [t.text for t in doc])
-            # print(spacy_model.tokenizer)
-            # iterate through sentences and print predicted labels
-            start_ind = 0
-            new_ents = []
-            for i, sentence in enumerate(sentences):
-                for entity in sentence.get_spans('ner'):
-                    # the indexes for these spans start from 1
-                    indices = [t.idx for t in entity.tokens]
-                    # print('Entity tag: ', entity.tag)
-                    # print(entity)
-                    lab = utils.CONLL_MAPPINGS.get(entity.tag, None)  # map predicted label to Conll for demo
-                    if lab is not None:
-                        # new_ents.append(Span(doc, start=start_ind + indices[0] - 1,
-                        #                 end=start_ind + indices[-1], label=entity.tag))
-                        start_tok = doc[start_ind + indices[0] - 1]
-                        end_tok = doc[start_ind + indices[-1] - 1]
-                        new_ents.append({'name': lab,
-                                         'pos': [start_tok.idx, end_tok.idx + len(end_tok) - 1],
-                                         'tpos': [-1, -1],
-                                         'text': text[start_tok.idx: end_tok.idx + len(end_tok)],
-                                         'confidence': 1
-                                         })
+        # predict tags for sentences
+        self.flair_model.predict(sentences)
 
-                start_ind += len(sents[i])
+        # print('DOc texT: ', [t.text for t in doc])
+        # print(spacy_model.tokenizer)
+        # iterate through sentences and print predicted labels
+        start_ind = 0
+        new_ents = []
+        for i, sentence in enumerate(sentences):
+            for entity in sentence.get_spans('ner'):
+                # the indexes for these spans start from 1
+                indices = [t.idx for t in entity.tokens]
+                # print('Entity tag: ', entity.tag)
+                # print(entity)
+                lab = utils.CONLL_MAPPINGS.get(entity.tag, None)  # map predicted label to Conll for demo
+                if lab is not None:
+                    # new_ents.append(Span(doc, start=start_ind + indices[0] - 1,
+                    #                 end=start_ind + indices[-1], label=entity.tag))
+                    start_tok = doc[start_ind + indices[0] - 1]
+                    end_tok = doc[start_ind + indices[-1] - 1]
+                    new_ents.append({'name': lab,
+                                     'pos': [start_tok.idx, end_tok.idx + len(end_tok) - 1],
+                                     'tpos': [-1, -1],
+                                     'text': texts[start_tok.idx: end_tok.idx + len(end_tok)],
+                                     'confidence': 1
+                                     })
 
+            start_ind += len(sents[i])
             preds_list.append(new_ents)
 
         return {'result': preds_list}
